@@ -6,14 +6,18 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft, ifft
 from json import loads
 from msvcrt import kbhit, getch
-from numpy import random, linspace, array
+from numpy import random, linspace, array, real, append, int32
 from time import sleep
-from math import floor
+from math import floor, fabs
+from scipy.signal import savgol_filter
+from sklearn.decomposition import FastICA
 
 
 class NeuroSky(object):
     def __init__(self, debug=False, verbose=False):
         self.verbose = verbose
+        self.remove_blinks = False
+        self.blink_threshold = 150
         self.raw_data = 0
         self.raw_data_batch = []
         self.fft_data = []
@@ -92,29 +96,14 @@ class NeuroSky(object):
 
     def computer_fft(self):
         tmp = self.raw_data_batch.copy()
+        ica = FastICA()
         self.raw_data_batch = []
-        self.fft_data = []
         batch_size = len(tmp)
-        x_fft = linspace(0, 1 / (2 * (1 / 512)), batch_size / 2)
-        y_fft = fft(tmp)
-        self.fft_data.append(x_fft)
-        self.fft_data.append(y_fft)
-
-    # def plot(self):
-    #     x = []
-    #     y = []
-    #     i = 0
-    #     plt.autoscale(enable=True, axis='both', tight=None)
-    #     while not self.CLOSED and plt.get_fignums():
-    #         if i > 1:
-    #             x.pop(0)
-    #             y.pop(0)
-    #         x.append(i)
-    #         y.append(self.raw_data)
-    #         plt.plot(x, y, 'g-')
-    #         plt.pause(0.01)
-    #         i += 1
-    #     plt.close()
+        x_fft = linspace(0, 1 / (2 * (1 / 512)), batch_size)
+        y_fft = real(fft(tmp))
+        y_fft = savgol_filter(y_fft, 41, 10)
+        fft_data_list = array([x_fft, y_fft])
+        self.fft_data = fft_data_list
 
     def keypress_handler(self):
         print('Press ESC to quit at any time!')
@@ -131,5 +120,5 @@ class NeuroSky(object):
 
 
 if __name__ == '__main__':
-    neuro = NeuroSky(debug=True, verbose=True)
+    neuro = NeuroSky(debug=False, verbose=False)
     # neuro.get_sampling_rate()
