@@ -8,7 +8,9 @@ action from a EEG live recording incrementally, I am attempting utilise the foll
  
 ## Contact Info:
 For any further details on this project feel free to contact me at:
+
 Email: Victor@Oliveira.org.uk
-LinkedIn: https://www.linkedin.com/in/vcoliveira/
+
+LinkedIn: [Victor Oliveira]: https://www.linkedin.com/in/vcoliveira
 
 Thank you.
