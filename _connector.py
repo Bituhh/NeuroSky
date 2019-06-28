@@ -15,10 +15,10 @@ class Connector(object):
         self._DEBUG = debug
         self._VERBOSE = verbose
 
-        # Subject disposal handler
+        # disposal handler
         self.subscriptions = []
 
-        # RxPy Subjects/Observers
+        # Observables and Subjects
         self.data = Subject()
         self.subscriptions.append(self.data)
         self.poor_signal_level = Subject()
@@ -26,10 +26,11 @@ class Connector(object):
         self.sampling_rate = Subject()
         self.subscriptions.append(self.sampling_rate)
 
-        # Data Params
+        # Hidden Params
         self._sampling_rate_counter = 0
-        self.is_open = True
+        self._is_open = True
 
+        # Connection initializer
         self.client_socket = socket.socket(
             family=socket.AF_INET, type=socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
 
@@ -41,7 +42,7 @@ class Connector(object):
         threading.Thread(target=target, args=args).start()
 
     def _generate_sampling_rate(self):  # type: (NeuroSky) -> None
-        while self.is_open:
+        while self._is_open:
             self._sampling_rate_counter = 0
             sleep(1)
             self.sampling_rate.on_next(self._sampling_rate_counter)
@@ -49,7 +50,7 @@ class Connector(object):
     def _generate_data(self):  # type: (NeuroSky) -> None
         if self._DEBUG:
             self._init_thread(target=self._generate_sampling_rate)
-            while self.is_open:
+            while self._is_open:
                 gaussian_num = floor(random.normal(0, 150, 1)[0])
                 if -150 < gaussian_num < 150:
                     self.data.on_next(gaussian_num)
@@ -63,7 +64,7 @@ class Connector(object):
                 self._init_thread(target=self._generate_sampling_rate)
                 if self._VERBOSE:
                     print('Retrieving data...')
-                while self.is_open:
+                while self._is_open:
                     raw_bytes = self.client_socket.recv(1000)
                     data_set = (str(raw_bytes)[2:-3].split(r'\r'))
                     for data in data_set:
@@ -86,7 +87,7 @@ class Connector(object):
                 self.close()
 
     def close(self):  # type: (Connector) -> None
-        self.is_open = False
+        self._is_open = False
         try:
             self.client_socket.close()
         finally:
