@@ -1,18 +1,26 @@
-from . import Connector, Processor
+#!/usr/bin/env python3
+
 import threading
+import matplotlib.pyplot as plt
+
+from _connector import Connector
+from _processor import Processor
+
 from time import sleep, time
 from numpy import array_equal, array
 from scipy.signal import savgol_filter, butter, lfilter
 from sklearn.decomposition import FastICA
 from sklearn.ensemble import RandomForestClassifier
-import matplotlib.pyplot as plt
 
 
 class Trainer(object):
     def __init__(self):
-        # Training Parameters
+        # Classifier Initializer
         self.cls = RandomForestClassifier(n_estimators=100)
+
+        # Training Parameters
         self.is_trained = False
+
         self.prediction = 0
         self.prediction_status = 'Initialising...'
         self.training_counter = 0
@@ -92,3 +100,7 @@ class Trainer(object):
 if __name__ == '__main__':
     connector = Connector(debug=True, verbose=False)
     processor = Processor()
+    processor.fft_data.subscribe(lambda value: print(value))
+
+    while connector.is_open:
+        processor.append_data(connector.data)
