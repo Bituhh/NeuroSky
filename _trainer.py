@@ -70,23 +70,23 @@ class Trainer(object):
         # except:
         #     print('Error on training!')
         #     pass
-
-    def predict(self):
-        while not self.is_closed:
-            try:
-                if self.is_trained and (
-                        self.prediction_status not in ['Waiting 3 sec...', 'Recording Data...', 'Storing Data...',
-                                                       'Scoring Data...']):
-                    self.prediction_status = 'Prediction...'
-                    # print(len(self.fft_data[1]), '< y .... x >', len(self.fft_data[0]))
-                    if self.cls.predict([self.fft_data[1]])[0] == 0:
-                        self.prediction = 'Arm Up'
-                    else:
-                        self.prediction = 'Arm Down'
-                    sleep(0.25)
-            except:
-                pass
-                print('Error on predicting!')
+    #
+    # def predict(self):
+    #     while not self.is_closed:
+    #         try:
+    #             if self.is_trained and (
+    #                     self.prediction_status not in ['Waiting 3 sec...', 'Recording Data...', 'Storing Data...',
+    #                                                    'Scoring Data...']):
+    #                 self.prediction_status = 'Prediction...'
+    #                 # print(len(self.fft_data[1]), '< y .... x >', len(self.fft_data[0]))
+    #                 if self.cls.predict([self.fft_data[1]])[0] == 0:
+    #                     self.prediction = 'Arm Up'
+    #                 else:
+    #                     self.prediction = 'Arm Down'
+    #                 sleep(0.25)
+    #         except:
+    #             pass
+    #             print('Error on predicting!')
 
 
 if __name__ == '__main__':
