@@ -4,6 +4,7 @@ from _connector import Connector
 import threading
 from numpy import amin, amax, fft, absolute, real, array
 from rx.subjects import Subject
+from rx.operators import time_interval
 
 
 class Processor(object):

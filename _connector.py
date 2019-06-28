@@ -9,18 +9,25 @@ from math import floor
 from rx.subjects import Subject
 
 
-
 class Connector(object):
     def __init__(self, debug=False, verbose=False):  # type: (NeuroSky, bool, bool) -> None
         # Global            
         self._DEBUG = debug
         self._VERBOSE = verbose
 
-        # Data Parameters
+        # Subject disposal handler
+        self.subscriptions = []
+
+        # RxPy Subjects/Observers
         self.data = Subject()
+        self.subscriptions.append(self.data)
         self.poor_signal_level = Subject()
+        self.subscriptions.append(self.poor_signal_level)
+        self.sampling_rate = Subject()
+        self.subscriptions.append(self.sampling_rate)
+
+        # Data Params
         self._sampling_rate_counter = 0
-        self._sampling_rate = 0
         self.is_open = True
 
         self.client_socket = socket.socket(
@@ -29,23 +36,19 @@ class Connector(object):
         # Data Generator initializer
         self._init_thread(target=self._generate_data)
 
-    def _init_thread(self, target, msg='', args=()):
-        if self._VERBOSE and msg is not '':
-            print(msg)
+    @staticmethod
+    def _init_thread(target, args=()):
         threading.Thread(target=target, args=args).start()
 
     def _generate_sampling_rate(self):  # type: (NeuroSky) -> None
         while self.is_open:
             self._sampling_rate_counter = 0
             sleep(1)
-            self._sampling_rate = self._sampling_rate_counter
-            if self._VERBOSE:
-                print('Sampling Rate: ', self._sampling_rate)
+            self.sampling_rate.on_next(self._sampling_rate_counter)
 
     def _generate_data(self):  # type: (NeuroSky) -> None
         if self._DEBUG:
-            self._init_thread(target=self._generate_sampling_rate,
-                              msg='Initialising timer...')
+            self._init_thread(target=self._generate_sampling_rate)
             while self.is_open:
                 gaussian_num = floor(random.normal(0, 150, 1)[0])
                 if -150 < gaussian_num < 150:
@@ -57,8 +60,7 @@ class Connector(object):
             try:
                 self.client_socket.connect(('127.0.0.1', 13854))
                 self.client_socket.sendall(bytes('{"enableRawOutput":true,"format":"Json"}'.encode('ascii')))
-                self._init_thread(target=self._generate_sampling_rate,
-                                  msg='Initialising timer...')
+                self._init_thread(target=self._generate_sampling_rate)
                 if self._VERBOSE:
                     print('Retrieving data...')
                 while self.is_open:
@@ -90,12 +92,16 @@ class Connector(object):
         finally:
             print('Connection Closed!')
 
-        # Dispose of subjects.
-        self.data.dispose()
-        self.poor_signal_level.dispose()
+        # Dispose of subjects, as subscription type.
+        for subscription in self.subscriptions:
+            subscription.dispose()
 
 
 if __name__ == '__main__':
     connector = Connector(debug=True, verbose=False)
-    while connector.is_open:
-        print(connector.data)
+    connector.data.subscribe(lambda value: print(value))
+    connector.sampling_rate.subscribe(lambda value: print('Sampling Rate: {0}'.format(value)))
+    counter = 0
+    while counter < 1000:
+        counter += 1
+    connector.close()
