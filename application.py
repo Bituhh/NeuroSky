@@ -6,13 +6,12 @@ from PyQt5.QtChart import QChart, QChartView, QLineSeries, QLogValueAxis
 from PyQt5.QtGui import QPolygonF, QPainter
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QGridLayout, QVBoxLayout, QGroupBox, QWidget, QLabel
 from PyQt5.QtCore import Qt, QObject, QTimer
-from neurosky import NeuroSky
+from _connector import NeuroSky
 
 
 class Display(QWidget):
-    def __init__(self, debug=False, plot_freq=False):
+    def __init__(self, debug=False, verbose=False):
         QWidget.__init__(self)
-        self.plot_freq = plot_freq
         self.get_series(0.5, Qt.blue)
         self.get_charts()
         self.get_chart_views()
@@ -22,7 +21,7 @@ class Display(QWidget):
         self.resize(1400, 1000)
 
         # Initialises the sensor
-        self.neuro = NeuroSky(debug=debug)
+        self.neuro = NeuroSky(debug=debug, verbose=verbose)
         self.neuro.remove_blinks = True
         self.blink_threshold = 150
         # Links the values with the display
@@ -42,7 +41,19 @@ class Display(QWidget):
             print('Closing Program')
             self.neuro.CLOSED = True
             self.close()
-            pass
+        elif key == 87:
+            self.neuro.train(target=0)
+            print('w')
+        elif key == 83:
+            self.neuro.train(target=1)
+            print('s')
+
+    def train(self, target):
+        self.timer = QTimer()
+
+        self.timer.start()
+
+        pass
 
     def get_grid_layout(self):
         self.outer_layout = QGridLayout()
@@ -52,14 +63,18 @@ class Display(QWidget):
         self.outer_layout.addWidget(self.poor_signal_label, 0, 1)
         self.outer_layout.addWidget(self.raw_eeg_display, 1, 0)
         self.outer_layout.addWidget(self.raw_eeg_label, 1, 1)
+        self.outer_layout.addWidget(self.sampling_rate_display, 2, 0)
+        self.outer_layout.addWidget(self.sampling_rate_label, 2, 1)
 
         # Charts
         self.outer_layout.addWidget(self.raw_chart_view, 0, 2, 4, 4)
         self.outer_layout.addWidget(self.fft_chart_view, 4, 2, 4, 4)
-
+        self.outer_layout.addWidget(self.confidence_view, 6, 0, 2, 2)
         # Prediction
         self.outer_layout.addWidget(self.prediction_display, 4, 0)
         self.outer_layout.addWidget(self.prediction_label, 4, 1)
+        self.outer_layout.addWidget(self.prediction_status_display, 5, 0)
+        self.outer_layout.addWidget(self.prediction_status_label, 5, 1)
 
         # Timer
         self.outer_layout.addWidget(self.timer_display, 8, 2)
@@ -79,12 +94,20 @@ class Display(QWidget):
         self.raw_eeg_display.setAlignment(Qt.AlignTop)
         self.raw_eeg_label = QLabel('Initialising...')
         self.raw_eeg_label.setAlignment(Qt.AlignTop)
+        self.sampling_rate_display = QLabel('Sampling Rate:')
+        self.sampling_rate_display.setAlignment(Qt.AlignTop)
+        self.sampling_rate_label = QLabel('Initialising...')
+        self.sampling_rate_label.setAlignment(Qt.AlignTop)
 
         # Prediction
         self.prediction_display = QLabel('Predicted:')
         self.prediction_display.setAlignment(Qt.AlignLeft)
         self.prediction_label = QLabel('Initialising...')
         self.prediction_label.setAlignment(Qt.AlignLeft)
+        self.prediction_status_display = QLabel('Prediction Status:')
+        self.prediction_status_display.setAlignment(Qt.AlignLeft)
+        self.prediction_status_label = QLabel('Initialising...')
+        self.prediction_status_label.setAlignment(Qt.AlignLeft)
 
         # Timer
         self.timer_display = QLabel('Timer:')
@@ -98,51 +121,78 @@ class Display(QWidget):
 
     def get_series(self, width, color):
         self.raw_series = QLineSeries()
-        self.fft_series = QLineSeries()
         pen = self.raw_series.pen()
         pen.setColor(color)
         pen.setWidthF(width)
         self.raw_series.setPen(pen)
+
+        self.fft_series = QLineSeries()
         self.fft_series.setPen(pen)
+
+        self.w_series = QLineSeries()
+        self.w_series.setPen(pen)
+
+        self.s_series = QLineSeries()
+        self.s_series.setPen(pen)
 
     def get_charts(self):
         self.raw_chart = QChart()
-        self.fft_chart = QChart()
         self.raw_chart.legend().hide()
-        self.fft_chart.legend().hide()
         self.raw_chart.addSeries(self.raw_series)
+        self.raw_chart.createDefaultAxes()
+
+        self.fft_chart = QChart()
+        self.fft_chart.legend().hide()
         self.fft_chart.addSeries(self.fft_series)
         self.fft_y_axis = QLogValueAxis()
         self.fft_y_axis.setLabelFormat('%g')
         self.fft_y_axis.setBase(8)
-        self.raw_chart.createDefaultAxes()
         self.fft_chart.createDefaultAxes()
         self.fft_chart.axisX().setMax(100)
         self.fft_chart.axisX().setMin(0)
         self.fft_chart.axisY().setMax(5000)
-        self.fft_chart.axisY().setMin(-5000)
+        self.fft_chart.axisY().setMin(0)
+
+        self.confidence_chart = QChart()
+        self.confidence_chart.legend().hide()
+        self.confidence_chart.addSeries(self.w_series)
+        self.confidence_chart.addSeries(self.s_series)
+        self.confidence_chart.createDefaultAxes()
+        self.confidence_chart.axisY().setMax(100)
+        self.confidence_chart.axisY().setMin(0)
+        self.confidence_chart.axisX().setMin(0)
 
         # self.fft_chart.addAxis(self.fft_y_axis, Qt.AlignLeft)
         # self.fft_series.attachAxis(self.fft_y_axis)
 
     def get_chart_views(self):
         self.raw_chart_view = QChartView(self.raw_chart)
-        self.fft_chart_view = QChartView(self.fft_chart)
         self.raw_chart_view.setRenderHint(QPainter.Antialiasing)
-        self.fft_chart_view.setRenderHint(QPainter.Antialiasing)
         self.raw_chart_view.setAlignment(Qt.AlignCenter)
+
+        self.fft_chart_view = QChartView(self.fft_chart)
+        self.fft_chart_view.setRenderHint(QPainter.Antialiasing)
         self.fft_chart_view.setAlignment(Qt.AlignCenter)
+
+        self.confidence_view = QChartView(self.confidence_chart)
+        self.confidence_view.setRenderHint(QPainter.Antialiasing)
+        self.confidence_view.setAlignment(Qt.AlignCenter)
 
     def connect_data(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.plot_frequency)
         self.timer.timeout.connect(self.plot_raw)
+        self.timer.timeout.connect(self.plot_confidence)
         self.timer.timeout.connect(self.add_label_data)
         self.timer.start()
 
     def add_label_data(self):
         self.poor_signal_label.setText(str(self.neuro.poor_signal_level))
         self.raw_eeg_label.setText(str(self.neuro.raw_data))
+        self.prediction_label.setText(str(self.neuro.prediction))
+        self.prediction_status_label.setText(str(self.neuro.prediction_status))
+        self.sampling_rate_label.setText(str(self.neuro._sampling_rate))
+        self.counter_label.setText(str(self.neuro.training_counter))
 
     def plot_raw(self):
         self.raw_y = self.neuro.raw_data
@@ -165,11 +215,24 @@ class Display(QWidget):
             for i in range(len(self.fft_x)):
                 self.fft_series.append(self.fft_x[i], self.fft_y[i])
 
+    def plot_confidence(self):
+        self.w_series.clear()
+        self.s_series.clear()
+        self.confidence_chart.axisX().setMax(len(self.neuro.confidence_level))
+        for element in self.neuro.confidence_level:
+            if element[2] is 0:
+                self.w_series.append(element[1], element[0] * 100)
+            elif element[2] is 1:
+                self.s_series.append(element[1], element[0] * 100)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    ui = Display()
+    ui = Display(debug=False, verbose=False)
 
     ui.show()
     sys.exit(app.exec_())
+
+
+# press to record after 3 sec, record for 10 then stop
