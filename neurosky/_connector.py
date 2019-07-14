@@ -2,11 +2,13 @@
 
 import threading
 import socket
+import numpy as np
+import os
 from json import loads
-from numpy import random
-from time import sleep
+from time import sleep, time
 from math import floor
-from rx.subjects import Subject
+from rx.subject import Subject
+from rx.operators import take_while, take_until_with_time
 
 
 class Connector(object):
@@ -29,6 +31,11 @@ class Connector(object):
         # Hidden Params
         self._sampling_rate_counter = 0
         self._is_open = True
+        self._save_path = ''
+
+        # Editable Params
+        self.is_recording = False
+        self.recorded_data = []
 
         # Connection initializer
         self.client_socket = socket.socket(
@@ -51,10 +58,10 @@ class Connector(object):
         if self._DEBUG:
             self._init_thread(target=self._generate_sampling_rate)
             while self._is_open:
-                gaussian_num = floor(random.normal(0, 150, 1)[0])
+                gaussian_num = floor(np.random.normal(0, 150, 1)[0])
                 if -150 < gaussian_num < 150:
                     self.data.on_next(gaussian_num)
-                    self.poor_signal_level.on_next(random.randint(0, 100))
+                    self.poor_signal_level.on_next(np.random.randint(0, 100))
                     self._sampling_rate_counter += 1
 
         else:
@@ -72,7 +79,8 @@ class Connector(object):
                         try:
                             json_data = loads(data)
                             try:
-                                self.data.on_next(json_data['rawEeg'])
+                                temp_data = json_data['rawEeg']
+                                self.data.on_next(temp_data)
                             except:
                                 if len(json_data) > 3:
                                     self.poor_signal_level.on_next(json_data['eSense']['poorSignalLevel'])
@@ -86,23 +94,44 @@ class Connector(object):
                 print('An error occurred, are you connected?')
                 self.close()
 
+    def record(self, path='./connector_data', recording_length=10):
+        if not self.is_recording:
+            self._save_path = os.path.realpath(path)
+            self.recorded_data = []
+            self.is_recording = True
+            self.data.pipe(take_until_with_time(recording_length)).subscribe(
+                observer=lambda value: self.recorded_data.append(value),
+                on_error=lambda e: print(e),
+                on_completed=self._save
+            )
+        else:
+            print('Already recording...')
+
+    def _save(self):  # type: (Connector) -> None
+        np.save(self._save_path, self.recorded_data)
+        self.is_recording = False
+        print('Recording Complete')
+
     def close(self):  # type: (Connector) -> None
         self._is_open = False
+        self.is_recording = False
+        print('Closing Connection...')
+        sleep(2)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
+        # Dispose of subjects, as subscription type.
+        for subscription in self.subscriptions:
+            subscription.dispose()
         try:
             self.client_socket.close()
         finally:
             print('Connection Closed!')
 
-        # Dispose of subjects, as subscription type.
-        for subscription in self.subscriptions:
-            subscription.dispose()
-
 
 if __name__ == '__main__':
     connector = Connector(debug=True, verbose=False)
-    connector.data.subscribe(lambda value: print(value))
-    connector.sampling_rate.subscribe(lambda value: print('Sampling Rate: {0}'.format(value)))
-    counter = 0
-    while counter < 1000:
-        counter += 1
+    connector.data.subscribe(on_next=print, on_error=print)
+    connector.sampling_rate.subscribe(on_next=lambda value: print('Sampling Rate: {0}'.format(value)))
+    connector.poor_signal_level.subscribe(on_next=lambda value: print('Poor Signal Level: {0}'.format(value)))
+    connector.record()
+    while connector.is_recording:
+        pass
     connector.close()

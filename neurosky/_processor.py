@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
-from _connector import Connector
+from neurosky._connector import Connector
 import threading
-from numpy import amin, amax, fft, absolute, real, array
-from rx.subjects import Subject
+import os
+from time import time
+import numpy as np
+from rx.subject import Subject
+from rx.operators import take_until_with_time
 
 
 class Processor(object):
@@ -11,6 +14,8 @@ class Processor(object):
         # Editable params
         self.data_resolution = 250
         self.blink_threshold = 150
+        self.recorded_data = []
+        self.is_recording = False
 
         # Disposal handler
         self.subscriptions = []
@@ -21,6 +26,7 @@ class Processor(object):
 
         # Hidden params
         self._raw_data_batch = []
+        self._save_path = ''
 
     @staticmethod
     def _init_thread(target, args=()):  # type: (Any, Union[Tuple, Any]) -> None
@@ -37,20 +43,40 @@ class Processor(object):
         batch_size = len(temp_data_batch)
         fs = 512
         if batch_size is not 0 and (
-                self.blink_threshold > amax(temp_data_batch) or -self.blink_threshold < amin(temp_data_batch)):
-            x_fft = fft.rfftfreq(batch_size, 2 * (1 / fs))[2:50]
-            y_fft = absolute(real(fft.rfft(temp_data_batch)))[2:50]
-            self.data.on_next(array([x_fft, y_fft]))
+                self.blink_threshold > np.amax(temp_data_batch) or -self.blink_threshold < np.amin(temp_data_batch)):
+            x_fft = np.fft.rfftfreq(batch_size, 2 * (1 / fs))[2:50]
+            y_fft = np.absolute(np.real(np.fft.rfft(temp_data_batch)))[2:50]
+            self.data.on_next(np.array([x_fft, y_fft]))
+
+    def record(self, path='./processor_data', recording_length=10):
+        if not self.is_recording:
+            self._save_path = os.path.realpath(path)
+            self.recorded_data = []
+            self.is_recording = True
+            self.data.pipe(take_until_with_time(recording_length)).subscribe(
+                observer=lambda value: self.recorded_data.append(value),
+                on_error=lambda e: print(e),
+                on_completed=self._save
+            )
+        else:
+            print('Already recording...')
+
+    def _save(self):
+        np.save(self._save_path, self.recorded_data)
+        self.is_recording = False
+        print('Recording Complete')
 
     def close(self):
+        print('Closing Processor...')
         for subscription in self.subscriptions:
             subscription.dispose()
+        print('Processor Closed!')
 
 
 if __name__ == '__main__':
     connector = Connector(debug=True, verbose=False)
     processor = Processor()
-    connector.data.subscribe(lambda data: processor.add_data(data))
+    connector.data.subscribe(processor.add_data)
     processor.data.subscribe(lambda value: print(value))
     counter = 0
     while counter < 1000:

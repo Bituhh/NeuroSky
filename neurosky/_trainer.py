@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
 
 import threading
-import matplotlib.pyplot as plt
 
-from _connector import Connector
-from _processor import Processor
-
+from neurosky._connector import Connector
+from neurosky._processor import Processor
 from time import sleep, time
-from numpy import array_equal, array
-from scipy.signal import savgol_filter, butter, lfilter
-from sklearn.decomposition import FastICA
 from sklearn.ensemble import RandomForestClassifier
-from rx.subjects import Subject
+from rx.subject import Subject
 
 
 class Trainer(object):
-    def __init__(self):
+    def __init__(self,type):
         # Classifier Initializer
         self.cls = RandomForestClassifier(n_estimators=100)
 
@@ -113,10 +108,7 @@ if __name__ == '__main__':
     connector.data.subscribe(processor.add_data)
     processor.data.subscribe(trainer.add_data)
     counter = 0
-    while counter < 1000:
-        counter += 1
-    trainer.train(0)
-    sleep(60)
+
     connector.close()
     processor.close()
     trainer.close()
