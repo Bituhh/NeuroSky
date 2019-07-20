@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from utils import KeyHandler
+from neurosky.utils import KeyHandler
 
-from _connector import Connector
-from _processor import Processor
+from neurosky._connector import Connector
+from neurosky._processor import Processor
 from threading import Thread
 from time import sleep, time
 from sklearn.ensemble import RandomForestClassifier
@@ -10,7 +10,7 @@ from rx.subject import Subject
 import numpy as np
 
 
-class Trainer(object):
+class Trainer(object):  # type: Type[Trainer]
     def __init__(self):
         # Classifier Initializer
         super(Trainer, self).__init__()
@@ -22,6 +22,10 @@ class Trainer(object):
         # Observables and Subjects
         self.prediction = Subject()
         self.subscriptions.append(self.prediction)
+        self.training_status = Subject()
+        self.subscriptions.append(self.training_status)
+        self.identifiers = Subject()
+        self.subscriptions.append(self.identifiers)
 
         # Training Params
         self.training_wait_time = 3
@@ -55,78 +59,101 @@ class Trainer(object):
     def _init_thread(target, args=()):
         Thread(target=target, args=args).start()
 
-    def add_data(self, data):
+    def add_data(self, data):  # type: (Trainer, Any) -> None
         self.current_data = data
         if self._is_recording_data:
             for data in self.current_data:
                 self.sample.append(data)
                 self.target.append(self.current_training_target)
+        else:
+            self.predict()
 
-    def train(self, target):
-        self._is_training = True
-        for identifier in self._identifiers:
-            if identifier['name'] is target:
-                self.current_training_target = identifier['target']
-                break
-        sleep(self.training_wait_time)
-        self._is_recording_data = True
-        sleep(self.recording_time)
-        self._is_recording_data = False
-        # score previous training
-        # if self.is_previously_trained:
-        #     self.confidence_level.append(
-        #         [self.cls.score(recorded_data, recorded_target), self.training_counter, int(target)])
-        #     print(self.confidence_level[-1])
-        #     has_confidence_level = True
-        self.cls.n_estimators += 1
-        training_start_time = time()
-        self.cls.fit(self.sample, self.target)
-        print(time() - training_start_time)
-        self._is_training = False
-        # if has_confidence_level:
-        #     self.confidence_level[-1].append(time() - training_start_time)
-        #     print(self.confidence_level[-1][2])
-        # print('done fitting')
-        self.is_trained = True
-        # self.prediction_status = 'Ready...'
-        # self.training_counter += 1
+    def train(self, target):  # type: (Trainer, Any) -> None
+        def _train():
+            self._is_training = True
+            self.training_status.on_next('Training for {0}...'.format(target))
+            for identifier in self._identifiers:
+                if identifier['name'] is target:
+                    self.current_training_target = identifier['target']
+                    identifier['training_count'] += 1
+                    self._update_identifiers()
+                    break
+            sleep(self.training_wait_time)
+            self._is_recording_data = True
+            self.training_status.on_next('Recording data...')
+            sleep(self.recording_time)
+            self._is_recording_data = False
+            # score previous training
+            # if self.is_previously_trained:
+            #     self.confidence_level.append(
+            #         [self.cls.score(recorded_data, recorded_target), self.training_counter, int(target)])
+            #     print(self.confidence_level[-1])
+            #     has_confidence_level = True
+            self.cls.n_estimators += 1
+            # training_start_time = time()
+            self.training_status.on_next('Fitting data...')
+            print(np.array(self.target).shape)
+            self.cls.fit(self.sample, self.target)
+            # print(time() - training_start_time)
+            self._is_training = False
+            # if has_confidence_level:
+            #     self.confidence_level[-1].append(time() - training_start_time)
+            #     print(self.confidence_level[-1][2])
+            # print('done fitting')
+            self.is_trained = True
+            self.training_status.on_next('Training Complete')
+            # self.prediction_status = 'Ready...'
+            # self.training_counter += 1
 
-    def predict(self):
-        if self.is_trained and not self._is_training:
-            try:
-                prediction = self.cls.predict(self.current_data)[0]
-                for identifier in self._identifiers:
-                    if prediction == identifier['target']:
-                        print(identifier['name'])
-                        self.prediction = identifier['name']
-                sleep(self.prediction_wait_time)
-            except:
-                print('An error occurred on prediction, prediction not performed!')
+        self._init_thread(target=_train)
+
+    def predict(self):  # type: (Trainer) -> None
+        def _predict():
+            if self.is_trained and not self._is_training:
+                self.training_status.on_next('Predicting...')
+                try:
+                    prediction = self.cls.predict(self.current_data)[0]
+                    for identifier in self._identifiers:
+                        if prediction == identifier['target']:
+                            # print(identifier['name'])
+                            self.prediction.on_next(identifier['name'])
+                    sleep(self.prediction_wait_time)
+                except:
+                    print('An error occurred on prediction, prediction not performed!')
+
+        self._init_thread(target=_predict)
 
     # State Management
-    def add_prediction_identifier(self, identifier_name):  # type: (Trainer, str) -> str
+    def add_identifier(self, identifier_name):  # type: (Trainer, str) -> str
         identifier = {
             'name': identifier_name,
             'target': len(self._identifiers),
             'connector_index': 0,
-            'processor_index': 0
+            'processor_index': 0,
+            'training_count': 0
         }
         self._identifiers.append(identifier)
+        self._update_identifiers()
         return identifier_name
 
-    def get_next_connector_label(self, identifier_name):
+    def _update_identifiers(self):  # type: (Trainer) -> None
+        self.identifiers.on_next(self._identifiers)
+
+    def get_next_connector_label(self, identifier_name):  # type: (Trainer, Any) -> Any
         for identifier in self._identifiers:
             if identifier['name'] is identifier_name:
                 identifier['connector_index'] += 1
+                self._update_identifiers()
                 return identifier_name + '_connector_' + identifier['connector_index']
 
-    def get_next_processor_label(self, identifier_name):
+    def get_next_processor_label(self, identifier_name):  # type: (Trainer, Any) -> Any
         for identifier in self._identifiers:
             if identifier['name'] is identifier_name:
                 identifier['processor_index'] += 1
+                self._update_identifiers()
                 return identifier_name + '_processor_' + identifier['processor_index']
 
-    def close(self):
+    def close(self):  # type: (Trainer) -> None
         for subscription in self.subscriptions:
             subscription.dispose()
 
@@ -140,8 +167,8 @@ class _TestTrainer:
         self.connector.data.subscribe(self.processor.add_data)
         self.processor.data.subscribe(self.trainer.add_data)
 
-        self.trainer.add_prediction_identifier('Up')
-        self.trainer.add_prediction_identifier('Down')
+        self.trainer.add_identifier('Up')
+        self.trainer.add_identifier('Down')
 
         self.key_handler = KeyHandler()
         self.key_handler.add_key_event(key='q', event=self.close_all)

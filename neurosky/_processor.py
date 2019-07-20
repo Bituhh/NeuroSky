@@ -3,7 +3,7 @@
 import threading
 import os
 import numpy as np
-from _connector import Connector
+from neurosky._connector import Connector
 from time import sleep
 from rx.subject import Subject
 from rx.operators import take_until_with_time

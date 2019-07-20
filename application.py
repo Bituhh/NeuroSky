@@ -14,6 +14,9 @@ class Linker(QObject):
     fft = pyqtSignal(np.ndarray)
     poor_signal_level = pyqtSignal(int)
     sampling_rate = pyqtSignal(int)
+    prediction = pyqtSignal(str)
+    training_status = pyqtSignal(str)
+    identifiers = pyqtSignal(list)
 
     def __init__(self, debug=False):
         QObject.__init__(self)
@@ -25,6 +28,9 @@ class Linker(QObject):
         self.connector.poor_signal_level.subscribe(self.poor_signal_level.emit)
         self.connector.sampling_rate.subscribe(self.sampling_rate.emit)
         self.processor.data.subscribe(self._new_processor_data)
+        self.trainer.prediction.subscribe(self.prediction.emit)
+        self.trainer.training_status.subscribe(self.training_status.emit)
+        self.trainer.identifiers.subscribe(self.identifiers.emit)
 
     def _new_connector_data(self, data):
         self.processor.add_data(data)
@@ -48,9 +54,9 @@ class Display(QWidget):
 
         # Linker Params
         self._linker = Linker(debug=False)
-        self.TRAINER_FORWARD = self._linker.trainer.add_prediction_identifier('forward')
-        self.TRAINER_BACKWARD = self._linker.trainer.add_prediction_identifier('backward')
-        self.TRAINER_IDLE = self._linker.trainer.add_prediction_identifier('idle')
+        self.TRAINER_FORWARD = self._linker.trainer.add_identifier('forward')
+        self.TRAINER_BACKWARD = self._linker.trainer.add_identifier('backward')
+        self.TRAINER_IDLE = self._linker.trainer.add_identifier('idle')
 
         # Indicators
         self._raw_data_indicator = self._create_indicator('Raw Data:')
@@ -58,6 +64,9 @@ class Display(QWidget):
         self._sample_rate_indicator = self._create_indicator('Sample Rate:')
         self._prediction_indicator = self._create_indicator('Prediction:')
         self._training_status_indicator = self._create_indicator('Training Status:')
+        self._forward_counter_indicator = self._create_indicator('Current Forward Count:')
+        self._backward_counter_indicator = self._create_indicator('Current Backward Count:')
+        self._idle_counter_indicator = self._create_indicator('Current Idle Count:')
 
         # Initializing layout
         self.main_page()
@@ -85,6 +94,9 @@ class Display(QWidget):
         bottom_left_layout = QVBoxLayout()
         bottom_left_layout.addLayout(self._prediction_indicator['layout'])
         bottom_left_layout.addLayout(self._training_status_indicator['layout'])
+        bottom_left_layout.addLayout(self._idle_counter_indicator['layout'])
+        bottom_left_layout.addLayout(self._forward_counter_indicator['layout'])
+        bottom_left_layout.addLayout(self._backward_counter_indicator['layout'])
 
         bottom_right_layout = QVBoxLayout()
         bottom_right_layout.addWidget(self._get_processor_chart(), alignment=Qt.AlignCenter)
@@ -165,9 +177,20 @@ class Display(QWidget):
 
     def _connect_data(self):  # type: (Display) -> None
         self._linker.raw.connect(self._add_connector_data)
-        self._linker.poor_signal_level.connect(lambda level: self._poor_level_indicator['label'].setText(str(level)))
-        self._linker.sampling_rate.connect(lambda rate: self._sample_rate_indicator['label'].setText(str(rate)))
+        self._linker.poor_signal_level.connect(
+            lambda level: self._poor_level_indicator['label'].setText(str(level))
+        )
+        self._linker.sampling_rate.connect(
+            lambda rate: self._sample_rate_indicator['label'].setText(str(rate))
+        )
         self._linker.fft.connect(self._add_processor_data)
+        self._linker.prediction.connect(
+            lambda prediction: self._prediction_indicator['label'].setText(str(prediction))
+        )
+        self._linker.training_status.connect(
+            lambda status: self._training_status_indicator['label'].setText(str(status))
+        )
+        self._linker.identifiers.connect(self._connect_identifiers)
 
     def keyPressEvent(self, event):  # type: (Display, {key}) -> None
         key = event.key()
@@ -175,32 +198,28 @@ class Display(QWidget):
             self._linker.close()
             self.close()
         elif key == Qt.Key_W:
-            self._linker.connector.record(
-                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_FORWARD)
-            )
-            self._linker.processor.record(
-                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_FORWARD)
-            )
+            # self._linker.connector.record(
+            #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_FORWARD)
+            # )
+            # self._linker.processor.record(
+            #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_FORWARD)
+            # )
             self._linker.trainer.train(self.TRAINER_FORWARD)
-            self._raw_w_index += 1
-            self._processed_w_index += 1
         elif key == Qt.Key_S:
-            self._linker.connector.record(
-                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_BACKWARD)
-            )
-            self._linker.processor.record(
-                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_BACKWARD)
-            )
+            # self._linker.connector.record(
+            #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_BACKWARD)
+            # )
+            # self._linker.processor.record(
+            #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_BACKWARD)
+            # )
             self._linker.trainer.train(self.TRAINER_BACKWARD)
-            self._raw_s_index += 1
-            self._processed_s_index += 1
         elif key == Qt.Key_Space:
-            self._linker.connector.record(
-                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_IDLE)
-            )
-            self._linker.processor.record(
-                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_IDLE)
-            )
+            # self._linker.connector.record(
+            #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_IDLE)
+            # )
+            # self._linker.processor.record(
+            #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_IDLE)
+            # )
             self._linker.trainer.train(self.TRAINER_IDLE)
         else:
             print(key)
@@ -231,6 +250,16 @@ class Display(QWidget):
         y_axis = data[1]
         for i in range(len(x_axis)):
             self._processor_series.append(x_axis[i], y_axis[i])
+
+    @pyqtSlot(list)
+    def _connect_identifiers(self, identifiers):
+        for identifier in identifiers:
+            if identifier['name'] == self.TRAINER_IDLE:
+                self._idle_counter_indicator['label'].setText(str(identifier['training_count']))
+            elif identifier['name'] == self.TRAINER_FORWARD:
+                self._forward_counter_indicator['label'].setText(str(identifier['training_count']))
+            elif identifier['name'] == self.TRAINER_BACKWARD:
+                self._backward_counter_indicator['label'].setText(str(identifier['training_count']))
 
 
 if __name__ == '__main__':
