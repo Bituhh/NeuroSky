@@ -5,9 +5,8 @@ import numpy as np
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtChart import QChart, QChartView, QLineSeries, QLogValueAxis, QValueAxis
 from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QHBoxLayout
-from neurosky import Connector, Processor
-
+from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QPushButton
+from neurosky import Connector, Processor, Trainer
 
 
 class Linker(QObject):
@@ -16,18 +15,24 @@ class Linker(QObject):
     poor_signal_level = pyqtSignal(int)
     sampling_rate = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, debug=False):
         QObject.__init__(self)
-        self.connector = Connector(debug=True, verbose=False)
+        self.connector = Connector(debug=debug, verbose=False)
         self.processor = Processor()
+        self.trainer = Trainer()
+
         self.connector.data.subscribe(self._new_connector_data)
         self.connector.poor_signal_level.subscribe(self.poor_signal_level.emit)
         self.connector.sampling_rate.subscribe(self.sampling_rate.emit)
-        self.processor.data.subscribe(self.fft.emit)
+        self.processor.data.subscribe(self._new_processor_data)
 
     def _new_connector_data(self, data):
         self.processor.add_data(data)
         self.raw.emit(data)
+
+    def _new_processor_data(self, data):
+        self.trainer.add_data(data)
+        self.fft.emit(data)
 
     def close(self):
         self.connector.close()
@@ -35,11 +40,9 @@ class Linker(QObject):
 
 
 class Display(QWidget):
-    def __init__(self, debug=False, verbose=False, link=Linker()):
-        QWidget.__init__(self) # flags=Qt.CustomizeWindowHint | Qt.WindowTitleHint
-        self._DEBUG = debug
-        self._VERBOSE = verbose
-        self._link = link
+    def __init__(self):
+        QWidget.__init__(self, flags=Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        self._linker = Linker(debug=False)
         self.setWindowTitle("NeuroSky GUI")
         self.resize(1400, 1000)
 
@@ -62,6 +65,7 @@ class Display(QWidget):
         self._raw_s_index = 1
         self._processed_s_index = 1
         self.is_recording_mode = False
+
         # self.raw_x = 0
         # self.raw_y = 0
         # self.fft_x = []
@@ -102,8 +106,6 @@ class Display(QWidget):
         # Set Layout
         self.setLayout(outer_layout)
 
-        # Recorded Data
-
     @staticmethod
     def _create_indicator(label):  # type: (Any) -> Dict[str, Union[QHBoxLayout, QLabel]]
         layout = QHBoxLayout()
@@ -112,6 +114,20 @@ class Display(QWidget):
         label_widget = QLabel('Initializing...')
         layout.addWidget(label_widget, alignment=Qt.AlignCenter)
         return {'layout': layout, 'display': display_widget, 'label': label_widget}
+
+    @pyqtSlot()
+    def on_switch_mode(self):
+        self.is_device_mode = not self.is_device_mode
+        if self.is_device_mode:
+            print('is device mode')
+            self._linker.close()
+            self._linker = Linker(debug=False)
+            self.switch_mode_btn.setObjectName('Switch to Debug Mode')
+        else:
+            print('is debug mode')
+            self._linker.close()
+            self._linker = Linker(debug=True)
+            self.switch_mode_btn.setObjectName('Switch to Device Mode')
 
     def _get_connector_chart(self):  # type: (Display) -> QChartView
         # Create pen
@@ -131,8 +147,8 @@ class Display(QWidget):
         self._connector_chart.createDefaultAxes()
         self._connector_chart.axisX().setMax(100)
         self._connector_chart.axisX().setMin(0)
-        self._connector_chart.axisY().setMax(150)
-        self._connector_chart.axisY().setMin(-150)
+        self._connector_chart.axisY().setMax(500)
+        self._connector_chart.axisY().setMin(-500)
 
         # Chart View
         view = QChartView(self._connector_chart)
@@ -184,10 +200,10 @@ class Display(QWidget):
         return view
 
     def _connect_data(self):  # type: (Display) -> None
-        self._link.raw.connect(self._add_connector_data)
-        self._link.poor_signal_level.connect(lambda level: self._poor_level_indicator['label'].setText(str(level)))
-        self._link.sampling_rate.connect(lambda rate: self._sample_rate_indicator['label'].setText(str(rate)))
-        self._link.fft.connect(self._add_processor_data)
+        self._linker.raw.connect(self._add_connector_data)
+        self._linker.poor_signal_level.connect(lambda level: self._poor_level_indicator['label'].setText(str(level)))
+        self._linker.sampling_rate.connect(lambda rate: self._sample_rate_indicator['label'].setText(str(rate)))
+        self._linker.fft.connect(self._add_processor_data)
 
     @pyqtSlot(int)
     def _add_connector_data(self, data):  # type: (Display, Any) -> Optional[Any]
@@ -210,17 +226,18 @@ class Display(QWidget):
     def keyPressEvent(self, event):  # type: (Display, {key}) -> None
         key = event.key()
         if key == Qt.Key_Escape:
-            self._link.close()
+            self._linker.close()
             self.close()
         elif key == Qt.Key_W:
-            self._link.connector.record('./data/raw_data/w_' + str(self._raw_w_index))
-            self._link.processor.record('./data/processed_data/w_' + str(self._processed_w_index))
+            self._linker.connector.record('./data/raw_data/forward_' + str(self._raw_w_index))
+            self._linker.processor.record('./data/processed_data/forward_' + str(self._processed_w_index))
+            self._linker.trainer.train(0)
             self._raw_w_index += 1
             self._processed_w_index += 1
             print('w')
         elif key == Qt.Key_S:
-            self._link.connector.record('./data/raw_data/s_' + str(self._raw_s_index))
-            self._link.processor.record('./data/processed_data/s_' + str(self._processed_s_index))
+            self._linker.connector.record('./data/raw_data/backward_' + str(self._raw_s_index))
+            self._linker.processor.record('./data/processed_data/backward_' + str(self._processed_s_index))
             self._raw_s_index += 1
             self._processed_s_index += 1
             print('s')
@@ -231,12 +248,12 @@ class Display(QWidget):
             print(key)
 
     def closeEvent(self, event):
+        self._linker.close()
         self.close()
-        self._link.close()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ui = Display(debug=True, verbose=False, link=Linker())
+    ui = Display()
     ui.show()
     sys.exit(app.exec_())
