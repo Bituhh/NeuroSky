@@ -8,7 +8,7 @@ from json import loads
 from time import sleep, time
 from math import floor
 from rx.subject import Subject
-from rx.operators import take_while, take_until_with_time
+from rx.operators import take_until_with_time
 
 
 class Connector(object):
@@ -116,7 +116,7 @@ class Connector(object):
         self._is_open = False
         self.is_recording = False
         print('Closing Connection...')
-        sleep(2)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
+        sleep(0.2)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
         # Dispose of subjects, as subscription type.
         for subscription in self.subscriptions:
             subscription.dispose()
@@ -127,7 +127,7 @@ class Connector(object):
 
 
 if __name__ == '__main__':
-    connector = Connector(debug=True, verbose=False)
+    connector = Connector(debug=False, verbose=False)
     connector.data.subscribe(on_next=print, on_error=print)
     connector.sampling_rate.subscribe(on_next=lambda value: print('Sampling Rate: {0}'.format(value)))
     connector.poor_signal_level.subscribe(on_next=lambda value: print('Poor Signal Level: {0}'.format(value)))

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-from neurosky._connector import Connector
+from _connector import Connector
 import threading
 import os
-from time import time
 import numpy as np
 from rx.subject import Subject
 from rx.operators import take_until_with_time
