@@ -41,10 +41,16 @@ class Linker(QObject):
 
 class Display(QWidget):
     def __init__(self):
+        # QWidget Setup
         QWidget.__init__(self, flags=Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-        self._linker = Linker(debug=False)
         self.setWindowTitle("NeuroSky GUI")
         self.resize(1400, 1000)
+
+        # Linker Params
+        self._linker = Linker(debug=False)
+        self.TRAINER_FORWARD = self._linker.trainer.add_prediction_identifier('forward')
+        self.TRAINER_BACKWARD = self._linker.trainer.add_prediction_identifier('backward')
+        self.TRAINER_IDLE = self._linker.trainer.add_prediction_identifier('idle')
 
         # Indicators
         self._raw_data_indicator = self._create_indicator('Raw Data:')
@@ -59,17 +65,6 @@ class Display(QWidget):
         # Series
         self._x_axis = 0
         self._connect_data()
-
-        self._raw_w_index = 1
-        self._processed_w_index = 1
-        self._raw_s_index = 1
-        self._processed_s_index = 1
-        self.is_recording_mode = False
-
-        # self.raw_x = 0
-        # self.raw_y = 0
-        # self.fft_x = []
-        # self.fft_y = []
 
     def main_page(self):  # type: (Display) -> None
         # Top Layout
@@ -105,29 +100,6 @@ class Display(QWidget):
 
         # Set Layout
         self.setLayout(outer_layout)
-
-    @staticmethod
-    def _create_indicator(label):  # type: (Any) -> Dict[str, Union[QHBoxLayout, QLabel]]
-        layout = QHBoxLayout()
-        display_widget = QLabel(label)
-        layout.addWidget(display_widget, alignment=Qt.AlignCenter)
-        label_widget = QLabel('Initializing...')
-        layout.addWidget(label_widget, alignment=Qt.AlignCenter)
-        return {'layout': layout, 'display': display_widget, 'label': label_widget}
-
-    @pyqtSlot()
-    def on_switch_mode(self):
-        self.is_device_mode = not self.is_device_mode
-        if self.is_device_mode:
-            print('is device mode')
-            self._linker.close()
-            self._linker = Linker(debug=False)
-            self.switch_mode_btn.setObjectName('Switch to Debug Mode')
-        else:
-            print('is debug mode')
-            self._linker.close()
-            self._linker = Linker(debug=True)
-            self.switch_mode_btn.setObjectName('Switch to Device Mode')
 
     def _get_connector_chart(self):  # type: (Display) -> QChartView
         # Create pen
@@ -178,20 +150,12 @@ class Display(QWidget):
         self._processor_chart.axisY().setMin(0)
 
         self._processor_x_axis = QValueAxis()
-        # self._processor_x_axis.setTitleText("Data point")
         self._processor_x_axis.setLabelFormat('%i')
-        # self._processor_x_axis.setTickCount(self._processor_series.count())
         self._processor_chart.setAxisX(self._processor_x_axis, self._processor_series)
 
         self._processor_y_axis = QLogValueAxis()
-        # self._processor_y_axis.setTitleText('Values')
         self._processor_y_axis.setLabelFormat('%g')
         self._processor_y_axis.setBase(8)
-        # self._processor_y_axis.setMinorTickCount(-1)
-        # self._processor_chart.setAxisY(self._processor_y_axis)
-
-        # self._processor_series.attachAxis(self._processor_x_axis)
-        # self._processor_series.attachAxis(self._processor_y_axis)
 
         # Chart View
         view = QChartView(self._processor_chart)
@@ -205,6 +169,51 @@ class Display(QWidget):
         self._linker.sampling_rate.connect(lambda rate: self._sample_rate_indicator['label'].setText(str(rate)))
         self._linker.fft.connect(self._add_processor_data)
 
+    def keyPressEvent(self, event):  # type: (Display, {key}) -> None
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self._linker.close()
+            self.close()
+        elif key == Qt.Key_W:
+            self._linker.connector.record(
+                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_FORWARD)
+            )
+            self._linker.processor.record(
+                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_FORWARD)
+            )
+            self._linker.trainer.train(self.TRAINER_FORWARD)
+            self._raw_w_index += 1
+            self._processed_w_index += 1
+        elif key == Qt.Key_S:
+            self._linker.connector.record(
+                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_BACKWARD)
+            )
+            self._linker.processor.record(
+                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_BACKWARD)
+            )
+            self._linker.trainer.train(self.TRAINER_BACKWARD)
+            self._raw_s_index += 1
+            self._processed_s_index += 1
+        elif key == Qt.Key_Space:
+            self._linker.connector.record(
+                './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_IDLE)
+            )
+            self._linker.processor.record(
+                './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_IDLE)
+            )
+            self._linker.trainer.train(self.TRAINER_IDLE)
+        else:
+            print(key)
+
+    @staticmethod
+    def _create_indicator(label):  # type: (Any) -> Dict[str, Union[QHBoxLayout, QLabel]]
+        layout = QHBoxLayout()
+        display_widget = QLabel(label)
+        layout.addWidget(display_widget, alignment=Qt.AlignCenter)
+        label_widget = QLabel('Initializing...')
+        layout.addWidget(label_widget, alignment=Qt.AlignCenter)
+        return {'layout': layout, 'display': display_widget, 'label': label_widget}
+
     @pyqtSlot(int)
     def _add_connector_data(self, data):  # type: (Display, Any) -> Optional[Any]
         self._raw_data_indicator['label'].setText(str(data))
@@ -216,40 +225,12 @@ class Display(QWidget):
             self._x_axis += 1
 
     @pyqtSlot(np.ndarray)
-    def _add_processor_data(self, data):  # type: (Display, Any) -> Optional[Any]
+    def _add_processor_data(self, data):  # type: (Display, {__getitem__}) -> Optional[Any]
         self._processor_series.clear()
         x_axis = data[0]
         y_axis = data[1]
         for i in range(len(x_axis)):
             self._processor_series.append(x_axis[i], y_axis[i])
-
-    def keyPressEvent(self, event):  # type: (Display, {key}) -> None
-        key = event.key()
-        if key == Qt.Key_Escape:
-            self._linker.close()
-            self.close()
-        elif key == Qt.Key_W:
-            self._linker.connector.record('./data/raw_data/forward_' + str(self._raw_w_index))
-            self._linker.processor.record('./data/processed_data/forward_' + str(self._processed_w_index))
-            self._linker.trainer.train(0)
-            self._raw_w_index += 1
-            self._processed_w_index += 1
-            print('w')
-        elif key == Qt.Key_S:
-            self._linker.connector.record('./data/raw_data/backward_' + str(self._raw_s_index))
-            self._linker.processor.record('./data/processed_data/backward_' + str(self._processed_s_index))
-            self._raw_s_index += 1
-            self._processed_s_index += 1
-            print('s')
-        elif key == Qt.Key_Space:
-            self.is_recording_mode = not self.is_recording_mode
-            print(self.is_recording_mode)
-        else:
-            print(key)
-
-    def closeEvent(self, event):
-        self._linker.close()
-        self.close()
 
 
 if __name__ == '__main__':

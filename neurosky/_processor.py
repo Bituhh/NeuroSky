@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-from _connector import Connector
 import threading
 import os
 import numpy as np
+from _connector import Connector
+from time import sleep
 from rx.subject import Subject
 from rx.operators import take_until_with_time
 
@@ -15,6 +16,7 @@ class Processor(object):
         self.blink_threshold = 150
         self.recorded_data = []
         self.is_recording = False
+        self._is_open = True
 
         # Disposal handler
         self.subscriptions = []
@@ -33,7 +35,7 @@ class Processor(object):
 
     def add_data(self, raw_data):  # type: (Processor, int) -> None
         self._raw_data_batch.append(raw_data)
-        if len(self._raw_data_batch) >= self.data_resolution:
+        if len(self._raw_data_batch) >= self.data_resolution and self._is_open:
             self._init_thread(target=self._fft)
 
     def _fft(self):  # type: (Processor) -> None
@@ -66,7 +68,8 @@ class Processor(object):
         print('Recording Complete')
 
     def close(self):
-        print('Closing Processor...')
+        self._is_open = True
+        sleep(0.5)
         for subscription in self.subscriptions:
             subscription.dispose()
         print('Processor Closed!')

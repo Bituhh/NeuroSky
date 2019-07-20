@@ -115,8 +115,7 @@ class Connector(object):
     def close(self):  # type: (Connector) -> None
         self._is_open = False
         self.is_recording = False
-        print('Closing Connection...')
-        sleep(0.2)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
+        sleep(0.5)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
         # Dispose of subjects, as subscription type.
         for subscription in self.subscriptions:
             subscription.dispose()
@@ -128,7 +127,7 @@ class Connector(object):
 
 if __name__ == '__main__':
     connector = Connector(debug=False, verbose=False)
-    connector.data.subscribe(on_next=print, on_error=print)
+    connector.data.subscribe(on_next=print)
     connector.sampling_rate.subscribe(on_next=lambda value: print('Sampling Rate: {0}'.format(value)))
     connector.poor_signal_level.subscribe(on_next=lambda value: print('Poor Signal Level: {0}'.format(value)))
     connector.record()

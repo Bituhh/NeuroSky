@@ -40,7 +40,7 @@ class Trainer(object):
 
         # Prediction Initializer
         # self.confidence_level = []
-        self._prediction_identifiers = []
+        self._identifiers = []
         # self._init_thread(target=self.predict)
 
         '''
@@ -64,9 +64,9 @@ class Trainer(object):
 
     def train(self, target):
         self._is_training = True
-        for identifiers in self._prediction_identifiers:
-            if identifiers['name'] is target:
-                self.current_training_target = identifiers['target']
+        for identifier in self._identifiers:
+            if identifier['name'] is target:
+                self.current_training_target = identifier['target']
                 break
         sleep(self.training_wait_time)
         self._is_recording_data = True
@@ -91,20 +91,40 @@ class Trainer(object):
         # self.prediction_status = 'Ready...'
         # self.training_counter += 1
 
-    def add_prediction_identifier(self, name):
-        self._prediction_identifiers.append({'name': name, 'target': len(self._prediction_identifiers) - 1})
-
     def predict(self):
         if self.is_trained and not self._is_training:
             try:
                 prediction = self.cls.predict(self.current_data)[0]
-                for identifier in self._prediction_identifiers:
-                    if prediction is identifier['target']:
+                for identifier in self._identifiers:
+                    if prediction == identifier['target']:
                         print(identifier['name'])
                         self.prediction = identifier['name']
                 sleep(self.prediction_wait_time)
             except:
                 print('An error occurred on prediction, prediction not performed!')
+
+    # State Management
+    def add_prediction_identifier(self, identifier_name):  # type: (Trainer, str) -> str
+        identifier = {
+            'name': identifier_name,
+            'target': len(self._identifiers),
+            'connector_index': 0,
+            'processor_index': 0
+        }
+        self._identifiers.append(identifier)
+        return identifier_name
+
+    def get_next_connector_label(self, identifier_name):
+        for identifier in self._identifiers:
+            if identifier['name'] is identifier_name:
+                identifier['connector_index'] += 1
+                return identifier_name + '_connector_' + identifier['connector_index']
+
+    def get_next_processor_label(self, identifier_name):
+        for identifier in self._identifiers:
+            if identifier['name'] is identifier_name:
+                identifier['processor_index'] += 1
+                return identifier_name + '_processor_' + identifier['processor_index']
 
     def close(self):
         for subscription in self.subscriptions:
@@ -113,7 +133,7 @@ class Trainer(object):
 
 class _TestTrainer:
     def __init__(self):
-        self.connector = Connector(debug=True, verbose=False)
+        self.connector = Connector(debug=False, verbose=False)
         self.processor = Processor()
         self.trainer = Trainer()
 
