@@ -22,7 +22,7 @@ class Linker(QObject):
         QObject.__init__(self)
         self.connector = Connector(debug=debug, verbose=False)
         self.processor = Processor()
-        self.trainer = Trainer()
+        self.trainer = Trainer('MLP')
 
         self.connector.data.subscribe(self._new_connector_data)
         self.connector.poor_signal_level.subscribe(self.poor_signal_level.emit)
@@ -49,11 +49,11 @@ class Display(QWidget):
     def __init__(self):
         # QWidget Setup
         QWidget.__init__(self, flags=Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-        self.setWindowTitle("NeuroSky GUI")
+        self.setWindowTitle("NqeuroSky GUI")
         self.resize(1400, 1000)
 
         # Linker Params
-        self._linker = Linker(debug=False)
+        self._linker = Linker(debug=True)
         self.TRAINER_FORWARD = self._linker.trainer.add_identifier('forward')
         self.TRAINER_BACKWARD = self._linker.trainer.add_identifier('backward')
         self.TRAINER_IDLE = self._linker.trainer.add_identifier('idle')

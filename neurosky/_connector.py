@@ -63,6 +63,7 @@ class Connector(object):
                     self.data.on_next(gaussian_num)
                     self.poor_signal_level.on_next(np.random.randint(0, 100))
                     self._sampling_rate_counter += 1
+                    sleep(0.00001)
 
         else:
             try:

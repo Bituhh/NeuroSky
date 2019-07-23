@@ -1,20 +1,38 @@
 #!/usr/bin/env python3
-from neurosky.utils import KeyHandler
+from functools import wraps
 
-from neurosky._connector import Connector
-from neurosky._processor import Processor
+try:
+    from neurosky.utils import KeyHandler
+    from neurosky._connector import Connector
+    from neurosky._processor import Processor
+except ModuleNotFoundError:
+    from utils import KeyHandler
+    from _connector import Connector
+    from _processor import Processor
+
 from threading import Thread
-from time import sleep, time
+from time import sleep
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from rx.subject import Subject
 import numpy as np
 
 
 class Trainer(object):  # type: Type[Trainer]
-    def __init__(self):
-        # Classifier Initializer
+    def __init__(self, classifier_name='MLP'):
+        # Classifier initialiser
         super(Trainer, self).__init__()
-        self.cls = RandomForestClassifier(n_estimators=100)
+        self.classifier = classifier_name
+        classifiers = {
+            'RandomForest': RandomForestClassifier(n_estimators=10),
+            'MLP': MLPClassifier(
+                solver='lbfgs',
+                hidden_layer_sizes=(100, 100, 100),
+                max_iter=1,
+                warm_start=True
+            )
+        }
+        self.cls = classifiers[classifier_name]
 
         # disposal handler
         self.subscriptions = []
@@ -29,31 +47,26 @@ class Trainer(object):  # type: Type[Trainer]
 
         # Training Params
         self.training_wait_time = 3
-        self.recording_time = 3
+        self.recording_time = 10
         self._is_recording_data = False
         self.is_trained = False
         self._is_training = False
         self.current_training_target = None
-        self.sample = []
-        self.target = []
+        self.samples = []
+        self.targets = []
+        self.accumulative_samples = []
+        self.accumulative_targets = []
         # self.training_counter = 0
 
         # Prediction Params
         self.prediction_wait_time = 0.25
         self.current_data = []
 
-        # Prediction Initializer
+        # Prediction initialiser
         # self.confidence_level = []
         self._identifiers = []
         # self._init_thread(target=self.predict)
-
-        '''
-        Handling data steps:
-        wait a time interval
-        record data for a set time interval
-        score data if previously trained
-        train on data set.
-        '''
+        self._initialise_classifier(classifier_name)
 
     @staticmethod
     def _init_thread(target, args=()):
@@ -61,51 +74,82 @@ class Trainer(object):  # type: Type[Trainer]
 
     def add_data(self, data):  # type: (Trainer, Any) -> None
         self.current_data = data
+        print(data)
+
         if self._is_recording_data:
-            for data in self.current_data:
-                self.sample.append(data)
-                self.target.append(self.current_training_target)
+            self.samples.append(data[0])
+            self.targets.append(self.current_training_target)
+            self.accumulative_samples.append(data[0])
+            self.accumulative_targets.append(self.current_training_target)
         else:
             self.predict()
 
+    def _initialise_classifier(self, classifier_name):
+        # try:
+        initial_forward_data = np.load('./neurosky/training_initialiser/forward_processor_data.npy')
+        initial_backward_data = np.load('./neurosky/training_initialiser/backward_processor_data.npy')
+        initial_idle_data = np.load('./neurosky/training_initialiser/idle_processor_data.npy')
+        # except:
+            # print('Unable to load files')
+        data_identifiers = [initial_forward_data, initial_backward_data, initial_idle_data]
+        for data_identifier in data_identifiers:
+            for i, data in enumerate(data_identifier):
+                print(np.array(data).shape)
+                self.accumulative_samples.append(data[0])
+                self.accumulative_targets.append(i)
+                self.samples.append(data[0])
+                self.targets.append(i)
+        print(np.array(self.samples).shape)
+        print('Starting initial training...')
+        if classifier_name == 'RandomForest':
+            self._init_thread(self._random_forest.__wrapped__, args=(self,))
+        elif classifier_name == 'MLP':
+            self._init_thread(self._mlp.__wrapped__, args=(self,))
+        print('Finalising initial training...')
+
     def train(self, target):  # type: (Trainer, Any) -> None
-        def _train():
+        # Determining target
+        for identifier in self._identifiers:
+            if identifier['name'] is target:
+                self.current_training_target = identifier['target']
+                identifier['training_count'] += 1
+                self._update_identifiers()
+                break
+
+        if self.classifier == 'RandomForest':
+            self._init_thread(target=self._random_forest)
+        elif self.classifier == 'MLP':
+            self._init_thread(target=self._mlp)
+
+    def _training_decorator(func):
+        @wraps(func)
+        def wrapper(self):
+            # Set training flag and status
+            self.training_status.on_next('Training for {0}...'.format(self.current_training_target))
             self._is_training = True
-            self.training_status.on_next('Training for {0}...'.format(target))
-            for identifier in self._identifiers:
-                if identifier['name'] is target:
-                    self.current_training_target = identifier['target']
-                    identifier['training_count'] += 1
-                    self._update_identifiers()
-                    break
             sleep(self.training_wait_time)
-            self._is_recording_data = True
             self.training_status.on_next('Recording data...')
+            self.samples = []
+            self.targets = []
+            self._is_recording_data = True
             sleep(self.recording_time)
             self._is_recording_data = False
-            # score previous training
-            # if self.is_previously_trained:
-            #     self.confidence_level.append(
-            #         [self.cls.score(recorded_data, recorded_target), self.training_counter, int(target)])
-            #     print(self.confidence_level[-1])
-            #     has_confidence_level = True
-            self.cls.n_estimators += 1
-            # training_start_time = time()
             self.training_status.on_next('Fitting data...')
-            print(np.array(self.target).shape)
-            self.cls.fit(self.sample, self.target)
-            # print(time() - training_start_time)
+            func(self)
             self._is_training = False
-            # if has_confidence_level:
-            #     self.confidence_level[-1].append(time() - training_start_time)
-            #     print(self.confidence_level[-1][2])
-            # print('done fitting')
             self.is_trained = True
             self.training_status.on_next('Training Complete')
-            # self.prediction_status = 'Ready...'
-            # self.training_counter += 1
+        return wrapper
 
-        self._init_thread(target=_train)
+    @_training_decorator
+    def _random_forest(self):
+        self.cls.n_estimators += 1
+        self.cls.fit(self.accumulative_samples, self.accumulative_targets)
+
+    @_training_decorator
+    def _mlp(self):
+        print('mlp')
+        self.cls.fit(self.samples, self.targets)
 
     def predict(self):  # type: (Trainer) -> None
         def _predict():
@@ -162,20 +206,26 @@ class _TestTrainer:
     def __init__(self):
         self.connector = Connector(debug=False, verbose=False)
         self.processor = Processor()
-        self.trainer = Trainer()
+        self.trainer = Trainer(classifier_name='RandomForestq')
 
         self.connector.data.subscribe(self.processor.add_data)
         self.processor.data.subscribe(self.trainer.add_data)
 
-        self.trainer.add_identifier('Up')
-        self.trainer.add_identifier('Down')
+        self.IDENTIFIER_FORWARD = self.trainer.add_identifier('forward')
+        self.IDENTIFIER_DOWN = self.trainer.add_identifier('backward')
+        self.IDENTIFIER_IDLE = self.trainer.add_identifier('idle')
 
         self.key_handler = KeyHandler()
         self.key_handler.add_key_event(key='q', event=self.close_all)
-        self.key_handler.add_key_event(key='1', event=self.trainer.train, target='Up')
-        self.key_handler.add_key_event(key='2', event=self.trainer.train, target='Down')
+        self.key_handler.add_key_event(key='1', event=self.record, identifier_name=self.IDENTIFIER_FORWARD)
+        self.key_handler.add_key_event(key='2', event=self.record, identifier_name=self.IDENTIFIER_DOWN)
+        self.key_handler.add_key_event(key='3', event=self.record, identifier_name=self.IDENTIFIER_IDLE)
         self.key_handler.add_key_event(key='p', event=self.trainer.predict)
         self.key_handler.start()
+
+    def record(self, identifier_name):
+        self.connector.record('./neurosky/training_initialiser/' + identifier_name + '_connector_data')
+        self.processor.record('./neurosky/training_initialiser/' + identifier_name + '_processor_data')
 
     def close_all(self):
         self.connector.close()

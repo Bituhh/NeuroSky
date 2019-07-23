@@ -3,7 +3,10 @@
 import threading
 import os
 import numpy as np
-from neurosky._connector import Connector
+try:
+    from neurosky._connector import Connector
+except ModuleNotFoundError:
+    from _connector import Connector
 from time import sleep
 from rx.subject import Subject
 from rx.operators import take_until_with_time
@@ -35,6 +38,9 @@ class Processor(object):
 
     def add_data(self, raw_data):  # type: (Processor, int) -> None
         self._raw_data_batch.append(raw_data)
+        if not self.is_recording:
+            pass
+            # print(raw_data)
         if len(self._raw_data_batch) >= self.data_resolution and self._is_open:
             self._init_thread(target=self._fft)
 
@@ -55,7 +61,7 @@ class Processor(object):
             self.recorded_data = []
             self.is_recording = True
             self.data.pipe(take_until_with_time(recording_length)).subscribe(
-                observer=lambda value: self.recorded_data.append(value),
+                observer=lambda values: self.recorded_data.append(values),
                 on_error=lambda e: print(e),
                 on_completed=self._save
             )
