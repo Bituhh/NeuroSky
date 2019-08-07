@@ -3,6 +3,7 @@
 import threading
 import os
 import numpy as np
+
 try:
     from neurosky._connector import Connector
 except ModuleNotFoundError:
@@ -16,10 +17,11 @@ class Processor(object):
     def __init__(self):  # type: (Processor) -> None
         # Editable params
         self.data_resolution = 250
-        self.blink_threshold = 150
+        self.blink_threshold = 500
         self.recorded_data = []
         self.is_recording = False
         self._is_open = True
+        self._sample_frequency = 512
 
         # Disposal handler
         self.subscriptions = []
@@ -38,20 +40,19 @@ class Processor(object):
 
     def add_data(self, raw_data):  # type: (Processor, int) -> None
         self._raw_data_batch.append(raw_data)
-        if not self.is_recording:
-            pass
-            # print(raw_data)
         if len(self._raw_data_batch) >= self.data_resolution and self._is_open:
             self._init_thread(target=self._fft)
+
+    def set_sampling_rate(self, fs):
+        self._sample_frequency = fs
 
     def _fft(self):  # type: (Processor) -> None
         temp_data_batch = self._raw_data_batch.copy()
         self._raw_data_batch = []
         batch_size = len(temp_data_batch)
-        fs = 512
         if batch_size is not 0 and (
                 self.blink_threshold > np.amax(temp_data_batch) or -self.blink_threshold < np.amin(temp_data_batch)):
-            x_fft = np.fft.rfftfreq(batch_size, 2 * (1 / fs))[2:50]
+            x_fft = np.fft.rfftfreq(batch_size, 2 * (1 / self._sample_frequency))[2:50]
             y_fft = np.absolute(np.real(np.fft.rfft(temp_data_batch)))[2:50]
             self.data.on_next(np.array([x_fft, y_fft]))
 

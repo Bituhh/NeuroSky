@@ -116,7 +116,7 @@ class Connector(object):
     def close(self):  # type: (Connector) -> None
         self._is_open = False
         self.is_recording = False
-        sleep(0.5)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
+        sleep(0.75)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
         # Dispose of subjects, as subscription type.
         for subscription in self.subscriptions:
             subscription.dispose()

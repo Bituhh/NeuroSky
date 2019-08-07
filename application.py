@@ -18,11 +18,13 @@ class Linker(QObject):
     training_status = pyqtSignal(str)
     identifiers = pyqtSignal(list)
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, trainer='MLP'):
         QObject.__init__(self)
         self.connector = Connector(debug=debug, verbose=False)
         self.processor = Processor()
-        self.trainer = Trainer('MLP')
+        self.trainer = Trainer(trainer)
+
+        self
 
         self.connector.data.subscribe(self._new_connector_data)
         self.connector.poor_signal_level.subscribe(self.poor_signal_level.emit)
@@ -46,14 +48,14 @@ class Linker(QObject):
 
 
 class Display(QWidget):
-    def __init__(self):
+    def __init__(self, trainer='MLP', debug=False):
         # QWidget Setup
         QWidget.__init__(self, flags=Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-        self.setWindowTitle("NqeuroSky GUI")
+        self.setWindowTitle("NeuroSky GUI")
         self.resize(1400, 1000)
 
         # Linker Params
-        self._linker = Linker(debug=True)
+        self._linker = Linker(debug=debug, trainer=trainer)
         self.TRAINER_FORWARD = self._linker.trainer.add_identifier('forward')
         self.TRAINER_BACKWARD = self._linker.trainer.add_identifier('backward')
         self.TRAINER_IDLE = self._linker.trainer.add_identifier('idle')
@@ -264,6 +266,6 @@ class Display(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ui = Display()
+    ui = Display(trainer='RandomForest', debug=False)
     ui.show()
     sys.exit(app.exec_())
