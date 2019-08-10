@@ -7,6 +7,7 @@ import os
 from json import loads
 from time import sleep, time
 from math import floor
+from rx.internal import DisposedException
 from rx.subject import Subject
 from rx.operators import take_until_with_time
 
@@ -116,10 +117,14 @@ class Connector(object):
     def close(self):  # type: (Connector) -> None
         self._is_open = False
         self.is_recording = False
-        sleep(0.75)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
+        sleep(1.5)  # Wait for the threads to finalise. ToDo: Consider adding frame rate sleep.
         # Dispose of subjects, as subscription type.
+
         for subscription in self.subscriptions:
-            subscription.dispose()
+            try:
+                subscription.dispose()
+            except DisposedException:
+                pass
         try:
             self.client_socket.close()
         finally:

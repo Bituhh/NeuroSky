@@ -3,6 +3,7 @@
 import threading
 import os
 import numpy as np
+from rx.internal import DisposedException
 
 try:
     from neurosky._connector import Connector
@@ -76,9 +77,12 @@ class Processor(object):
 
     def close(self):
         self._is_open = True
-        sleep(0.5)
+        sleep(1.5)
         for subscription in self.subscriptions:
-            subscription.dispose()
+            try:
+                subscription.dispose()
+            except DisposedException:
+                pass
         print('Processor Closed!')
 
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import json
 import os
 from functools import wraps
 from typing import Any, Type
+
+from rx.internal import DisposedException
 
 try:
     from neurosky.utils import KeyHandler
@@ -19,35 +22,51 @@ from threading import Thread
 from time import sleep, time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.decomposition import PCA
 from rx.subject import Subject
 import numpy as np
 
 
 class Trainer(object):  # type: Type[Trainer]
     def __init__(self, classifier_name='MLP'):
-        # Classifier initialiser
         super(Trainer, self).__init__()
-        self.classifier = classifier_name
+        # Classifier initialiser
+        self.classifier_name = classifier_name
         classifiers = {
-            'RandomForest': RandomForestClassifier(n_estimators=100, warm_start=True),
+            'RandomForest': RandomForestClassifier(n_estimators=10),
             'MLP': MLPClassifier(
-                solver='lbfgs',
-                hidden_layer_sizes=(1000, 1000, 1000, 1000, 1000),
-                max_iter=1,
-                warm_start=True
+                solver='adam',
+                alpha=1,
+                # hidden_layer_sizes=(100, 100, 100, 100, 100),
+                verbose=True,
+                shuffle=True,
+                warm_start=True,
+                learning_rate='adaptive',
+            ),
+            'SVC': SVC(gamma='auto'),
+            'KNN': KNeighborsClassifier(5),
+            'AdaBoost': AdaBoostClassifier(
+                n_estimators=100,
+                random_state=0,
+                learning_rate=0.05
             )
         }
         self.cls = classifiers[classifier_name]
-
-        # disposal handler
-        self.subscriptions = []
+        self.pca = PCA(n_components=2)
+        self._is_open = True
 
         # Observables and Subjects
         self.prediction = Subject()
-        self.subscriptions.append(self.prediction)
-        self.training_status = Subject()
-        self.subscriptions.append(self.training_status)
+        self.status = Subject()
         self.identifiers = Subject()
+
+        # disposal handler
+        self.subscriptions = []
+        self.subscriptions.append(self.prediction)
+        self.subscriptions.append(self.status)
         self.subscriptions.append(self.identifiers)
 
         # Training Params
@@ -68,20 +87,19 @@ class Trainer(object):  # type: Type[Trainer]
         self.current_data = []
 
         # Scoring Params
-        self.scoring = []
+        self.training_summary = []
 
         # Prediction initialiser
         self._identifiers = []
-        self._initialise_classifier(classifier_name)
 
-
+        self._init_thread(target=self._initialise_classifier, args=(classifier_name,))
 
     @staticmethod
     def _init_thread(target, args=()):
         Thread(target=target, args=args).start()
 
     def add_data(self, data):  # type: (Trainer, Any) -> None
-        self.current_data = data
+        self.current_data = data[0]
         if self._is_recording_data:
             self.recorded_data.append(data)
             self.samples.append(data[0])
@@ -92,6 +110,7 @@ class Trainer(object):  # type: Type[Trainer]
             self.predict()
 
     def _initialise_classifier(self, classifier_name):
+        self.status.on_next('Initialising Trainer...')
         for i in range(100):
             arm_down_data = np.load('./neurosky/data/arm_down_processor_' + str(i + 1) + '.npy')
             for data in arm_down_data:
@@ -105,85 +124,126 @@ class Trainer(object):  # type: Type[Trainer]
                 self.accumulative_targets.append(0)
                 self.samples.append(data[0])
                 self.targets.append(0)
-        print(self.targets)
         if classifier_name == 'RandomForest':
             self._init_thread(self._random_forest.__wrapped__, args=(self,))
         elif classifier_name == 'MLP':
             self._init_thread(self._mlp.__wrapped__, args=(self,))
+        elif classifier_name == 'SVC':
+            self._init_thread(self._svc.__wrapped__, args=(self,))
+        elif classifier_name == 'KNN':
+            self._init_thread(self._knn.__wrapped__, args=(self,))
+        elif classifier_name == 'AdaBoost':
+            self._init_thread(self._adaboost.__wrapped__, args=(self,))
 
     def train(self, identifier_name):  # type: (Trainer, Any) -> None
-        # Determining target
-        for identifier in self._identifiers:
-            if identifier['name'] is identifier_name:
-                self.current_training_target = identifier['target']
-                identifier['training_count'] += 1
-                self._update_identifiers()
-                break
+        if self._is_open:
+            for identifier in self._identifiers:
+                if identifier['name'] is identifier_name:
+                    self.current_training_target = identifier['target']
+                    identifier['training_count'] += 1
+                    self._update_identifiers()
+                    break
 
-        if self.classifier == 'RandomForest':
-            print('RandomForest')
-            self._init_thread(target=self._random_forest)
-        elif self.classifier == 'MLP':
-            print('MLP')
-            self._init_thread(target=self._mlp)
+            if self.classifier_name == 'RandomForest':
+                print('RandomForest')
+                self._init_thread(target=self._random_forest)
+            elif self.classifier_name == 'MLP':
+                print('MLP')
+                self._init_thread(target=self._mlp)
+            elif self.classifier_name == 'SVC':
+                print('SVC')
+                self._init_thread(target=self._svc)
+            elif self.classifier_name == 'KNN':
+                print('KNN')
+                self._init_thread(target=self._knn)
 
     def _training(func):
         @wraps(func)
         def wrapper(self):
-            # Set training flag and status
-            self.training_status.on_next('Training for {0}...'.format(self.current_training_target))
-            self._is_training = True
-            sleep(self.training_wait_time)
-            self.training_status.on_next('Recording data...')
-            self.recorded_data = []
-            self.samples = []
-            self.targets = []
-            self._is_recording_data = True
-            sleep(self.recording_time)
-            self._is_recording_data = False
-            identifier_name = 'arm_up'
-            for identifier in self._identifiers:
-                if identifier['target'] is self.current_training_target:
-                    identifier_name = identifier['name']
-                    break
-            np.save('./neurosky/data/' + self.get_next_processor_label(identifier_name), self.recorded_data)
-            self.training_status.on_next('Scoring data...')
-            self.scoring.append(self.cls.score(self.samples, self.targets))
-            self.training_status.on_next('Fitting data...')
-            start_time = time()
-            func(self)
-            print(time() - start_time)
-            self._is_training = False
-            self.training_status.on_next('Training Complete')
+            if not self._is_training:
+                # Set training flag and status
+                identifier_name = 'arm_up'
+                for identifier in self._identifiers:
+                    if identifier['target'] is self.current_training_target:
+                        identifier_name = identifier['name']
+                        break
+                self.status.on_next('Training for {0}...'.format(identifier_name))
+                self._is_training = True
+                sleep(self.training_wait_time)
+                self.status.on_next('Recording data...')
+                self.recorded_data = []
+                self.samples = []
+                self.targets = []
+                self._is_recording_data = True
+                sleep(self.recording_time)
+                self._is_recording_data = False
+                np.save('./neurosky/data/' + self.get_next_processor_label(identifier_name), self.recorded_data)
+                self.status.on_next('Scoring data...')
+                score = self.cls.score(self.samples, self.targets)
+                print('Current Score is {0}'.format(score))
+                self.status.on_next('Fitting data...')
+                start_time = time()
+                func(self)
+                training_time = time() - start_time
+                print(training_time)
+                self.training_summary.append({
+                    'score': score,
+                    'identifier_name': identifier_name,
+                    'time_elapse': training_time,
+                    'total_sample_size': len(self.accumulative_samples),
+                    'total_target_size': len(self.accumulative_targets),
+                    'classifier_name': self.classifier_name
+                })
+                self._is_training = False
+                self.status.on_next('Training Complete')
+
         return wrapper
 
     @_training
     def _random_forest(self):
         self.cls.n_estimators += 1
-        print(np.array(self.accumulative_samples).shape)
         self.cls.fit(self.accumulative_samples, self.accumulative_targets)
         self.is_trained = True
 
     @_training
     def _mlp(self):
-        print(np.array(self.samples).shape)
-        self.cls.fit(self.samples, self.targets)
+        self.cls.fit(self.accumulative_samples, self.accumulative_targets)
+        print(self.cls.loss_)
+        self.is_trained = True
+
+    @_training
+    def _svc(self):
+        # samples = self.pca.fit_transform(self.accumulative_samples)
+        self.cls.fit(self.accumulative_samples, self.accumulative_targets)
+        self.is_trained = True
+
+    @_training
+    def _knn(self):
+        self.cls.fit(self.accumulative_samples, self.accumulative_targets)
+        self.is_trained = True
+
+    @_training
+    def __adaboost(self):
+        self.cls.fit(self.accumulative_samples, self.accumulative_targets)
         self.is_trained = True
 
     def predict(self):  # type: (Trainer) -> None
         def _predict():
             if self.is_trained and not self._is_training:
-                self.training_status.on_next('Predicting...')
-                try:
-                    prediction = self.cls.predict(self.current_data)[0]
-                    for identifier in self._identifiers:
-                        if prediction == identifier['target']:
-                            self.prediction.on_next(identifier['name'])
-                    # sleep(self.prediction_wait_time)
-                except:
-                    print('An error occurred on prediction, prediction not performed!')
+                self.status.on_next('Predicting...')
+                # try:
+                # if self.classifier_name == 'SVC':
+                #     self.pca.fit_transform(self.)
+                train_data = np.array(self.current_data).reshape(1, -1)
+                prediction = self.cls.predict(train_data)[0]
+                for identifier in self._identifiers:
+                    if prediction == identifier['target']:
+                        self.prediction.on_next(identifier['name'])
+                # except:
+                #     print('An error occurred on prediction, prediction not performed!')
 
-        self._init_thread(target=_predict)
+        if self._is_open:
+            self._init_thread(target=_predict)
 
     # State Management
     def add_identifier(self, identifier_name):  # type: (Trainer, str) -> str
@@ -191,7 +251,7 @@ class Trainer(object):  # type: Type[Trainer]
             'name': identifier_name,
             'target': len(self._identifiers),
             'connector_index': 0,
-            'processor_index': int(len(os.listdir('./neurosky/data'))/2),
+            'processor_index': int(len(os.listdir('./neurosky/data')) / 2),
             'training_count': 0
         }
         self._identifiers.append(identifier)
@@ -216,24 +276,37 @@ class Trainer(object):  # type: Type[Trainer]
                 return identifier_name + '_processor_' + str(identifier['processor_index'])
 
     def close(self):  # type: (Trainer) -> None
+        self._is_open = False
+        sleep(0.5)
+        if len(self.training_summary) > 0:
+            with open('./neurosky/score.json', 'r') as file:
+                saved_data = json.loads(file.read())
+                saved_data.append(self.training_summary)
+                data_to_save = json.dumps(saved_data)
+            with open('./neurosky/score.json', 'w+') as file:
+                file.write(data_to_save)
         for subscription in self.subscriptions:
-            subscription.dispose()
+            try:
+                subscription.dispose()
+            except DisposedException:
+                pass
 
 
 class _TestTrainer:
     def __init__(self):
         self.counter = 0
+        self.signal_status = 'Poor Signal'
 
         self.connector = Connector(debug=False, verbose=False)
         self.processor = Processor()
-        self.trainer = Trainer(classifier_name='RandomForest')  # 'MLP'
+        self.trainer = Trainer(classifier_name='KNN')  # 'MLP' || 'RandomForest' || 'SVC' || 'KNN'
 
         self.connector.data.subscribe(self.processor.add_data)
         self.connector.sampling_rate.subscribe(self.processor.set_sampling_rate)
-        self.connector.poor_signal_level.subscribe(print)
+        self.connector.poor_signal_level.subscribe(self.check_poor_level)
 
         self.processor.data.subscribe(self.trainer.add_data)
-        # self.trainer.training_status.subscribe(print)
+        self.trainer.status.subscribe(print)
         self.trainer.prediction.subscribe(print)
 
         self.IDENTIFIER_ARM_UP = self.trainer.add_identifier('arm_up')
@@ -260,6 +333,16 @@ class _TestTrainer:
         self.processor.close()
         self.connector.close()
         self.key_handler.stop()
+
+    def check_poor_level(self, level):
+        if level > 0:
+            if self.signal_status is not 'Poor Signal':
+                print('Poor Signal')
+                self.signal_status = 'Poor Signal'
+        else:
+            if self.signal_status is not 'Good Signal':
+                print('Good Signal')
+                self.signal_status = 'Good Signal'
 
 
 if __name__ == '__main__':

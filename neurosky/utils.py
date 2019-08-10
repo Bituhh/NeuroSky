@@ -1,3 +1,5 @@
+import json
+
 from msvcrt import kbhit, getch
 from threading import Thread
 
@@ -29,3 +31,7 @@ class KeyHandler:
 
     def stop(self):
         self._is_running = False
+
+
+if __name__ == '__main__':
+    pass

@@ -1,0 +1,258 @@
+[
+  [
+    {
+      "score": 0.5,
+      "identifier_name": "arm_up",
+      "time_elapse": 33.55010986328125,
+      "total_sample_size": 3955,
+      "total_target_size": 3955
+    },
+    {
+      "score": 0.47619047619047616,
+      "identifier_name": "arm_down",
+      "time_elapse": 32.62717413902283,
+      "total_sample_size": 3976,
+      "total_target_size": 3976
+    },
+    {
+      "score": 0.5714285714285714,
+      "identifier_name": "arm_down",
+      "time_elapse": 32.17339468002319,
+      "total_sample_size": 3956,
+      "total_target_size": 3956
+    },
+    {
+      "score": 0.45,
+      "identifier_name": "arm_up",
+      "time_elapse": 33.82320809364319,
+      "total_sample_size": 3976,
+      "total_target_size": 3976
+    }
+  ],
+  [
+    {
+      "score": 0.65,
+      "identifier_name": "arm_up",
+      "time_elapse": 25.343043327331543,
+      "total_sample_size": 3955,
+      "total_target_size": 3955
+    },
+    {
+      "score": 0.5,
+      "identifier_name": "arm_down",
+      "time_elapse": 25.224592447280884,
+      "total_sample_size": 3975,
+      "total_target_size": 3975
+    },
+    {
+      "score": 0.6,
+      "identifier_name": "arm_up",
+      "time_elapse": 26.423351287841797,
+      "total_sample_size": 3995,
+      "total_target_size": 3995
+    },
+    {
+      "score": 0.75,
+      "identifier_name": "arm_down",
+      "time_elapse": 26.036848545074463,
+      "total_sample_size": 4015,
+      "total_target_size": 4015
+    }
+  ],
+  [
+    {
+      "score": 0.3333333333333333,
+      "identifier_name": "arm_up",
+      "time_elapse": 23.012799501419067,
+      "total_sample_size": 3956,
+      "total_target_size": 3956
+    },
+    {
+      "score": 0.4,
+      "identifier_name": "arm_down",
+      "time_elapse": 24.15345311164856,
+      "total_sample_size": 3976,
+      "total_target_size": 3976
+    },
+    {
+      "score": 0.8095238095238095,
+      "identifier_name": "arm_up",
+      "time_elapse": 23.77972936630249,
+      "total_sample_size": 3997,
+      "total_target_size": 3997
+    },
+    {
+      "score": 0.42857142857142855,
+      "identifier_name": "arm_up",
+      "time_elapse": 23.752436876296997,
+      "total_sample_size": 4018,
+      "total_target_size": 4018
+    },
+    {
+      "score": 0.5238095238095238,
+      "identifier_name": "arm_down",
+      "time_elapse": 23.707298278808594,
+      "total_sample_size": 4039,
+      "total_target_size": 4039
+    },
+    {
+      "score": 0.42857142857142855,
+      "identifier_name": "arm_down",
+      "time_elapse": 21.05316734313965,
+      "total_sample_size": 4060,
+      "total_target_size": 4060
+    }
+  ],
+  [
+    {
+      "score": 0.3,
+      "identifier_name": "arm_up",
+      "time_elapse": 32.780498027801514,
+      "total_sample_size": 3955,
+      "total_target_size": 3955
+    },
+    {
+      "score": 0.45,
+      "identifier_name": "arm_down",
+      "time_elapse": 34.88520669937134,
+      "total_sample_size": 3975,
+      "total_target_size": 3975
+    },
+    {
+      "score": 0.6190476190476191,
+      "identifier_name": "arm_up",
+      "time_elapse": 32.41630530357361,
+      "total_sample_size": 3996,
+      "total_target_size": 3996
+    },
+    {
+      "score": 0.19047619047619047,
+      "identifier_name": "arm_down",
+      "time_elapse": 36.8807327747345,
+      "total_sample_size": 4017,
+      "total_target_size": 4017
+    }
+  ],
+  [
+    {
+      "score": 0.6190476190476191,
+      "identifier_name": "arm_up",
+      "time_elapse": 4.126674175262451,
+      "total_sample_size": 3956,
+      "total_target_size": 3956,
+      "classifier_name": "RandomForest"
+    },
+    {
+      "score": 0.47619047619047616,
+      "identifier_name": "arm_down",
+      "time_elapse": 4.4014809131622314,
+      "total_sample_size": 3977,
+      "total_target_size": 3977,
+      "classifier_name": "RandomForest"
+    }
+  ],
+  [
+    {
+      "score": 0.19047619047619047,
+      "identifier_name": "arm_up",
+      "time_elapse": 3.606245994567871,
+      "total_sample_size": 3956,
+      "total_target_size": 3956,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.4,
+      "identifier_name": "arm_down",
+      "time_elapse": 3.5125749111175537,
+      "total_sample_size": 3976,
+      "total_target_size": 3976,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.7142857142857143,
+      "identifier_name": "arm_up",
+      "time_elapse": 3.158714532852173,
+      "total_sample_size": 3997,
+      "total_target_size": 3997,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.42857142857142855,
+      "identifier_name": "arm_down",
+      "time_elapse": 3.553957462310791,
+      "total_sample_size": 4018,
+      "total_target_size": 4018,
+      "classifier_name": "KNN"
+    }
+  ],
+  [
+    {
+      "score": 0.5,
+      "identifier_name": "arm_up",
+      "time_elapse": 4.617837190628052,
+      "total_sample_size": 3955,
+      "total_target_size": 3955,
+      "classifier_name": "SVC"
+    },
+    {
+      "score": 0.55,
+      "identifier_name": "arm_down",
+      "time_elapse": 4.505370378494263,
+      "total_sample_size": 3975,
+      "total_target_size": 3975,
+      "classifier_name": "SVC"
+    },
+    {
+      "score": 0.6190476190476191,
+      "identifier_name": "arm_up",
+      "time_elapse": 4.3510425090789795,
+      "total_sample_size": 3996,
+      "total_target_size": 3996,
+      "classifier_name": "SVC"
+    },
+    {
+      "score": 0.25,
+      "identifier_name": "arm_down",
+      "time_elapse": 3.5274789333343506,
+      "total_sample_size": 4016,
+      "total_target_size": 4016,
+      "classifier_name": "SVC"
+    }
+  ],
+  [
+    {
+      "score": 0.3,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.125750303268433,
+      "total_sample_size": 3955,
+      "total_target_size": 3955,
+      "classifier_name": "SVC"
+    },
+    {
+      "score": 0.6666666666666666,
+      "identifier_name": "arm_up",
+      "time_elapse": 5.96141242980957,
+      "total_sample_size": 3976,
+      "total_target_size": 3976,
+      "classifier_name": "SVC"
+    }
+  ],
+  [
+    {
+      "score": 0.42105263157894735,
+      "identifier_name": "arm_up",
+      "time_elapse": 3.43418550491333,
+      "total_sample_size": 3954,
+      "total_target_size": 3954,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.5714285714285714,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.414296627044678,
+      "total_sample_size": 3975,
+      "total_target_size": 3975,
+      "classifier_name": "KNN"
+    }
+  ]
+]

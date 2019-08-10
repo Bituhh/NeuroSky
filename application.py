@@ -31,7 +31,7 @@ class Linker(QObject):
         self.connector.sampling_rate.subscribe(self.sampling_rate.emit)
         self.processor.data.subscribe(self._new_processor_data)
         self.trainer.prediction.subscribe(self.prediction.emit)
-        self.trainer.training_status.subscribe(self.training_status.emit)
+        self.trainer.status.subscribe(self.training_status.emit)
         self.trainer.identifiers.subscribe(self.identifiers.emit)
 
     def _new_connector_data(self, data):
