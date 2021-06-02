@@ -1,0 +1,475 @@
+[
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.35517406463623047,
+      "score_before_training": 0.7777777777777778,
+      "score_after_training": 0.8518518518518519,
+      "total_processed_samples_size": 27
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.4692654609680176,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 28
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.47068023681640625,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 29
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.6117582321166992,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 30
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.5100562572479248,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 31
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8650732040405273,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 32
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.6643943786621094,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 33
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.091341495513916,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 34
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8134088516235352,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 35
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.1389031410217285,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 36
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.9117269515991211,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 37
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.1145968437194824,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 38
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.9142816066741943,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 39
+    }
+  ],
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.6432058811187744,
+      "score_before_training": 0.7435897435897436,
+      "score_after_training": 0.7692307692307693,
+      "total_processed_samples_size": 39
+    }
+  ],
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.7679855823516846,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 39
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.6778655052185059,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "total_processed_samples_size": 40
+    }
+  ],
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.7070024013519287,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 41
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.632296085357666,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 42
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.7340960502624512,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 43
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8381717205047607,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 44
+    }
+  ],
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.6558353900909424,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 45
+    }
+  ],
+  [
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.7899506092071533,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 45
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.7482037544250488,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 46
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8126811981201172,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 47
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8239607810974121,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 48
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.8099400997161865,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 49
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 0.9745099544525146,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 50
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.1045920848846436,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 51
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.102625846862793,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 52
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.2789957523345947,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 53
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.219336986541748,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 54
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.3571202754974365,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 55
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.2277729511260986,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 56
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.356302261352539,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 57
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.4138598442077637,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 58
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.7422113418579102,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 59
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.661008358001709,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 60
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.9031398296356201,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 61
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.8344535827636719,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 62
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.7042346000671387,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 63
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.8965351581573486,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 64
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.9436149597167969,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 65
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 1.9356133937835693,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 66
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.1617591381073,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 67
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.0290567874908447,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 68
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.3644351959228516,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 69
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.1968653202056885,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 70
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.4188392162323,
+      "score_before_training": 1.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 71
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.8294217586517334,
+      "score_before_training": 0.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 72
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.771440029144287,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 73
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.5183322429656982,
+      "score_before_training": 1.0,
+      "score_after_training": 1.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 74
+    },
+    {
+      "identifier_name": "left_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 2.764047384262085,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 75
+    },
+    {
+      "identifier_name": "right_arm",
+      "classifier_name": "RandomForest",
+      "training_time": 3.1637446880340576,
+      "score_before_training": 0.0,
+      "score_after_training": 0.0,
+      "samples_size_scored_against": 1,
+      "total_processed_samples_size": 76
+    }
+  ]
+]

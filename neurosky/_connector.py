@@ -114,6 +114,10 @@ class Connector(object):
         self.is_recording = False
         print('Recording Complete')
 
+    def await_recording(self):
+        while self.is_recording:
+            pass
+
     def close(self):  # type: (Connector) -> None
         self._is_open = False
         self.is_recording = False
@@ -132,11 +136,10 @@ class Connector(object):
 
 
 if __name__ == '__main__':
-    connector = Connector(debug=False, verbose=False)
+    connector = Connector()
     connector.data.subscribe(on_next=print)
     connector.sampling_rate.subscribe(on_next=lambda value: print('Sampling Rate: {0}'.format(value)))
     connector.poor_signal_level.subscribe(on_next=lambda value: print('Poor Signal Level: {0}'.format(value)))
     connector.record()
-    while connector.is_recording:
-        pass
+    connector.await_recording()
     connector.close()

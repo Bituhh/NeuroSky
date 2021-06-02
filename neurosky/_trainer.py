@@ -47,11 +47,11 @@ class Trainer(object):  # type: Type[Trainer]
                 learning_rate='adaptive',
             ),
             'SVC': SVC(gamma='auto'),
-            'KNN': KNeighborsClassifier(5),
+            'KNN': KNeighborsClassifier(n_neighbors=3),
             'AdaBoost': AdaBoostClassifier(
                 n_estimators=100,
+                learning_rate=0.05,
                 random_state=0,
-                learning_rate=0.05
             )
         }
         self.cls = classifiers[classifier_name]
@@ -92,38 +92,40 @@ class Trainer(object):  # type: Type[Trainer]
         # Prediction initialiser
         self._identifiers = []
 
-        self._init_thread(target=self._initialise_classifier, args=(classifier_name,))
+        # self._init_thread(target=self._initialise_classifier, args=(classifier_name,))
 
     @staticmethod
     def _init_thread(target, args=()):
         Thread(target=target, args=args).start()
 
     def add_data(self, data):  # type: (Trainer, Any) -> None
-        self.current_data = data[0]
+        self.current_data = data
         if self._is_recording_data:
             self.recorded_data.append(data)
-            self.samples.append(data[0])
+            self.samples.append(data)
             self.targets.append(self.current_training_target)
-            self.accumulative_samples.append(data[0])
+            self.accumulative_samples.append(data)
             self.accumulative_targets.append(self.current_training_target)
         else:
             self.predict()
 
     def _initialise_classifier(self, classifier_name):
         self.status.on_next('Initialising Trainer...')
-        for i in range(100):
-            arm_down_data = np.load('./neurosky/data/arm_down_processor_' + str(i + 1) + '.npy')
+        for i in range(int(len(os.listdir('./data')) / 2)):
+            arm_down_data = np.load('./data/arm_down_processor_' + str(i + 1) + '.npy')
             for data in arm_down_data:
-                self.accumulative_samples.append(data[0])
+                # print(data)
+                self.accumulative_samples.append(data[1])
                 self.accumulative_targets.append(1)
-                self.samples.append(data[0])
+                self.samples.append(data[1])
                 self.targets.append(1)
-            arm_up_data = np.load('./neurosky/data/arm_up_processor_' + str(i + 1) + '.npy')
+            arm_up_data = np.load('./data/arm_up_processor_' + str(i + 1) + '.npy')
             for data in arm_up_data:
-                self.accumulative_samples.append(data[0])
+                self.accumulative_samples.append(data[1])
                 self.accumulative_targets.append(0)
-                self.samples.append(data[0])
+                self.samples.append(data[1])
                 self.targets.append(0)
+        # print(np.array(self.samples).shape)
         if classifier_name == 'RandomForest':
             self._init_thread(self._random_forest.__wrapped__, args=(self,))
         elif classifier_name == 'MLP':
@@ -177,7 +179,7 @@ class Trainer(object):  # type: Type[Trainer]
                 self._is_recording_data = True
                 sleep(self.recording_time)
                 self._is_recording_data = False
-                np.save('./neurosky/data/' + self.get_next_processor_label(identifier_name), self.recorded_data)
+                np.save('./data/' + self.get_next_processor_label(identifier_name), self.recorded_data)
                 self.status.on_next('Scoring data...')
                 score = self.cls.score(self.samples, self.targets)
                 print('Current Score is {0}'.format(score))
@@ -186,6 +188,7 @@ class Trainer(object):  # type: Type[Trainer]
                 func(self)
                 training_time = time() - start_time
                 print(training_time)
+                print('Current Score is {0}'.format(self.cls.score(self.samples, self.targets)))
                 self.training_summary.append({
                     'score': score,
                     'identifier_name': identifier_name,
@@ -213,7 +216,6 @@ class Trainer(object):  # type: Type[Trainer]
 
     @_training
     def _svc(self):
-        # samples = self.pca.fit_transform(self.accumulative_samples)
         self.cls.fit(self.accumulative_samples, self.accumulative_targets)
         self.is_trained = True
 
@@ -223,7 +225,7 @@ class Trainer(object):  # type: Type[Trainer]
         self.is_trained = True
 
     @_training
-    def __adaboost(self):
+    def _adaboost(self):
         self.cls.fit(self.accumulative_samples, self.accumulative_targets)
         self.is_trained = True
 
@@ -234,6 +236,7 @@ class Trainer(object):  # type: Type[Trainer]
                 # try:
                 # if self.classifier_name == 'SVC':
                 #     self.pca.fit_transform(self.)
+                print(np.array(self.current_data).shape)
                 train_data = np.array(self.current_data).reshape(1, -1)
                 prediction = self.cls.predict(train_data)[0]
                 for identifier in self._identifiers:
@@ -251,7 +254,7 @@ class Trainer(object):  # type: Type[Trainer]
             'name': identifier_name,
             'target': len(self._identifiers),
             'connector_index': 0,
-            'processor_index': int(len(os.listdir('./neurosky/data')) / 2),
+            'processor_index': int(len(os.listdir('./data')) / 2),
             'training_count': 0
         }
         self._identifiers.append(identifier)
@@ -297,9 +300,9 @@ class _TestTrainer:
         self.counter = 0
         self.signal_status = 'Poor Signal'
 
-        self.connector = Connector(debug=False, verbose=False)
-        self.processor = Processor()
-        self.trainer = Trainer(classifier_name='KNN')  # 'MLP' || 'RandomForest' || 'SVC' || 'KNN'
+        self.connector = Connector()
+        self.processor = Processor(live=True)
+        self.trainer = Trainer(classifier_name='RandomForest')  # 'MLP' || 'RandomForest' || 'SVC' || 'KNN' || 'AdaBoost'
 
         self.connector.data.subscribe(self.processor.add_data)
         self.connector.sampling_rate.subscribe(self.processor.set_sampling_rate)
@@ -323,7 +326,7 @@ class _TestTrainer:
 
     def record(self, identifier_name):
         start_time = time()
-        self.processor.record('./neurosky/data/' + self.trainer.get_next_processor_label(identifier_name))
+        self.processor.record('./data/' + self.trainer.get_next_processor_label(identifier_name))
         while self.processor.is_recording:
             print(time() - start_time)
         self.counter += 1

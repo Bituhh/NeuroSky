@@ -254,5 +254,125 @@
       "total_target_size": 3975,
       "classifier_name": "KNN"
     }
+  ],
+  [
+    {
+      "score": 0.7,
+      "identifier_name": "arm_up",
+      "time_elapse": 5.700105428695679,
+      "total_sample_size": 3955,
+      "total_target_size": 3955,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.0,
+      "identifier_name": "arm_down",
+      "time_elapse": 4.7880730628967285,
+      "total_sample_size": 3975,
+      "total_target_size": 3975,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.38095238095238093,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.5622804164886475,
+      "total_sample_size": 3996,
+      "total_target_size": 3996,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.5238095238095238,
+      "identifier_name": "arm_up",
+      "time_elapse": 5.35737943649292,
+      "total_sample_size": 4017,
+      "total_target_size": 4017,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.47619047619047616,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.003985166549683,
+      "total_sample_size": 4038,
+      "total_target_size": 4038,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.38095238095238093,
+      "identifier_name": "arm_up",
+      "time_elapse": 5.205196380615234,
+      "total_sample_size": 4059,
+      "total_target_size": 4059,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.6666666666666666,
+      "identifier_name": "arm_down",
+      "time_elapse": 6.386946201324463,
+      "total_sample_size": 4080,
+      "total_target_size": 4080,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.23809523809523808,
+      "identifier_name": "arm_up",
+      "time_elapse": 6.422378063201904,
+      "total_sample_size": 4101,
+      "total_target_size": 4101,
+      "classifier_name": "KNN"
+    }
+  ],
+  [
+    {
+      "score": 0.45,
+      "identifier_name": "arm_up",
+      "time_elapse": 4.166444301605225,
+      "total_sample_size": 3955,
+      "total_target_size": 3955,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.4,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.070634603500366,
+      "total_sample_size": 3975,
+      "total_target_size": 3975,
+      "classifier_name": "KNN"
+    }
+  ],
+  [
+    {
+      "score": 0.38095238095238093,
+      "identifier_name": "arm_up",
+      "time_elapse": 4.233675241470337,
+      "total_sample_size": 5429,
+      "total_target_size": 5429,
+      "classifier_name": "KNN"
+    },
+    {
+      "score": 0.2857142857142857,
+      "identifier_name": "arm_down",
+      "time_elapse": 4.446800231933594,
+      "total_sample_size": 5450,
+      "total_target_size": 5450,
+      "classifier_name": "KNN"
+    }
+  ],
+  [
+    {
+      "score": 0.35,
+      "identifier_name": "arm_up",
+      "time_elapse": 6.292870044708252,
+      "total_sample_size": 5470,
+      "total_target_size": 5470,
+      "classifier_name": "RandomForest"
+    },
+    {
+      "score": 0.5,
+      "identifier_name": "arm_down",
+      "time_elapse": 5.875892400741577,
+      "total_sample_size": 5490,
+      "total_target_size": 5490,
+      "classifier_name": "RandomForest"
+    }
   ]
 ]

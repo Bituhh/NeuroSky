@@ -186,43 +186,43 @@ class Display(QWidget):
             lambda rate: self._sample_rate_indicator['label'].setText(str(rate))
         )
         self._linker.fft.connect(self._add_processor_data)
-        self._linker.prediction.connect(
-            lambda prediction: self._prediction_indicator['label'].setText(str(prediction))
-        )
-        self._linker.training_status.connect(
-            lambda status: self._training_status_indicator['label'].setText(str(status))
-        )
-        self._linker.identifiers.connect(self._connect_identifiers)
+        # self._linker.prediction.connect(
+        #     lambda prediction: self._prediction_indicator['label'].setText(str(prediction))
+        # )
+        # self._linker.training_status.connect(
+        #     lambda status: self._training_status_indicator['label'].setText(str(status))
+        # )
+        # self._linker.identifiers.connect(self._connect_identifiers)
 
     def keyPressEvent(self, event):  # type: (Display, {key}) -> None
         key = event.key()
         if key == Qt.Key_Escape:
             self._linker.close()
             self.close()
-        elif key == Qt.Key_W:
+        # elif key == Qt.Key_W:
             # self._linker.connector.record(
             #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_FORWARD)
             # )
             # self._linker.processor.record(
             #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_FORWARD)
             # )
-            self._linker.trainer.train(self.TRAINER_FORWARD)
-        elif key == Qt.Key_S:
+            # self._linker.trainer.train(self.TRAINER_FORWARD)
+        # elif key == Qt.Key_S:
             # self._linker.connector.record(
             #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_BACKWARD)
             # )
             # self._linker.processor.record(
             #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_BACKWARD)
             # )
-            self._linker.trainer.train(self.TRAINER_BACKWARD)
-        elif key == Qt.Key_Space:
+            # self._linker.trainer.train(self.TRAINER_BACKWARD)
+        # elif key == Qt.Key_Space:
             # self._linker.connector.record(
             #     './data/raw_data/' + self._linker.trainer.get_next_connector_label(self.TRAINER_IDLE)
             # )
             # self._linker.processor.record(
             #     './data/processed_data/' + self._linker.trainer.get_next_processor_label(self.TRAINER_IDLE)
             # )
-            self._linker.trainer.train(self.TRAINER_IDLE)
+            # self._linker.trainer.train(self.TRAINER_IDLE)
         else:
             print(key)
 
@@ -248,8 +248,8 @@ class Display(QWidget):
     @pyqtSlot(np.ndarray)
     def _add_processor_data(self, data):  # type: (Display, {__getitem__}) -> Optional[Any]
         self._processor_series.clear()
-        x_axis = data[0]
-        y_axis = data[1]
+        x_axis = np.fft.rfftfreq(250, 2 * (1 / 512))[2:50]
+        y_axis = data
         for i in range(len(x_axis)):
             self._processor_series.append(x_axis[i], y_axis[i])
 
@@ -265,6 +265,7 @@ class Display(QWidget):
 
 
 if __name__ == '__main__':
+
     app = QApplication(sys.argv)
     ui = Display(trainer='RandomForest', debug=False)
     ui.show()
