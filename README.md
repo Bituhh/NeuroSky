@@ -1,10 +1,8 @@
 # WARNING
 
-This project was not fully updated during development therefore the README.md might not reflect the code correctly, and there is no guarantee that is fully functional as it has not been updated in a while. If you wish to use this, please read through the code and update as needed.
+**This project was not fully updated during development therefore the README.md might not reflect the code correctly, and there is no guarantee that is fully functional as it has not been updated in a while. If you wish to use this, please read through the code and update as needed.**
 
-I am happy to accept any pull request that fixes any issue that you encounter. Including the README.md I just don't have the time to maintain it after all this time.
-
-
+**I am happy to accept any pull request that fixes any issue that you encounter. Including the README.md I just don't have the time to maintain it after all this time.**
 
 
 # NeuroSky
