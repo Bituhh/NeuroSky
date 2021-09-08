@@ -35,7 +35,7 @@ The whole project is designed in a reactive programming style by utilising the R
 Subjects. Both the Connector and Processor contains a Subject labeled data in which you are able to subscribe to any
 changes.
 
-```
+```python
 connector = Connector() # Connector assumes debug and verbose to be False.
 processor = Proccessor()
 trainer = Trainer()
