@@ -1,0 +1,8 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+neurosky.egg-info/PKG-INFO
+neurosky.egg-info/SOURCES.txt
+neurosky.egg-info/dependency_links.txt
+neurosky.egg-info/top_level.txt
