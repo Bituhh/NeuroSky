@@ -137,6 +137,7 @@ class Connector(object):
 
     def __enter__(self):
         # Data Generator initializer
+        print('here')
         self._init_thread(target=self._generate_data)
         return self
 

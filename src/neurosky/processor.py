@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition import FastICA
 
 try:
-    from neurosky._connector import Connector
+    from neurosky.connector import Connector
 except ModuleNotFoundError:
     from connector import Connector
 
