@@ -23,14 +23,21 @@ changes.
 
 ## Installation
 
+Clone the repository and install the requirements.
 ```bash
 git clone https://github.com/Bituhh/NeuroSky.git
 cd NeuroSky
 
 # Install the requirements
 pip install -r requirements.txt
+```
 
-# Run demo-1.py to see the library in action.
+Ensure that the following executable is running `ThinkGear_Connector/ThinkGear Connector.exe`.
+This is the ThinkGear Connector that will be used to connect to the NeuroSky device.
+
+Once you connect the device via Bluetooth.
+Run the demo to ensure everything is working as expected.
+```bash
 python ./src/demo-1.py
 ```
 
