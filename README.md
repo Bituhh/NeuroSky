@@ -1,8 +1,3 @@
-# WARNING
-
-**I am happy to accept any pull request that fixes any issue that you encounter. Including the README.md I just don't
-have the time to maintain it after all this time.**
-
 # NeuroSky
 
 This project is part of my Final 3rd Year Project.
@@ -25,6 +20,19 @@ The library is split into 4 sections:
 The whole project is designed in a reactive programming style by utilising the RxPy library to create Observables and
 Subjects. Both the Connector and Processor contains a Subject labeled `data` in which you are able `subscribe()` to any
 changes.
+
+## Installation
+
+```bash
+git clone https://github.com/Bituhh/NeuroSky.git
+cd NeuroSky
+
+# Install the requirements
+pip install -r requirements.txt
+
+# Run demo-1.py to see the library in action.
+python ./src/demo-1.py
+```
 
 ## Examples
 
@@ -55,6 +63,8 @@ from neurosky.utils import KeyHandler
 key_handler = KeyHandler()
 connector = Connector()
 processor = Processor()
+
+connector.start()  # Start the connector thread, which will start the data stream.
 
 # Calling async subscribers.
 connector.data.subscribe(processor.add_data)  # using named method.

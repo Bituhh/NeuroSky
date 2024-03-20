@@ -15,10 +15,12 @@ from rx3.operators import take_until_with_time
 
 
 class Connector(object):
-    def __init__(self, debug: bool = False, verbose: bool = False) -> None:
-        # Global            
+    def __init__(self, debug: bool = False, verbose: bool = False, hostname: str = '127.0.0.1', port: int = 13854) -> None:
+        # Global
         self._DEBUG: bool = debug
         self._VERBOSE: bool = verbose
+        self._HOSTNAME: str = hostname
+        self._PORT: int = port
 
         # disposal handler
         self.subscriptions: list[Subject] = []
@@ -46,6 +48,9 @@ class Connector(object):
         self.client_socket: socket.socket = socket.socket(
             family=socket.AF_INET, type=socket.SOCK_STREAM, proto=socket.IPPROTO_TCP)
 
+    def start(self):
+        self._init_thread(target=self._generate_data)
+
     @staticmethod
     def _init_thread(target: Callable, args: Tuple = ()) -> None:
         threading.Thread(target=target, args=args).start()
@@ -69,7 +74,7 @@ class Connector(object):
 
         else:
             try:
-                self.client_socket.connect(('127.0.0.1', 13854))
+                self.client_socket.connect((self._HOSTNAME, self._PORT))
                 self.client_socket.sendall(bytes('{"enableRawOutput":true,"format":"Json"}'.encode('ascii')))
                 self._init_thread(target=self._generate_sampling_rate)
                 if self._VERBOSE:
@@ -84,18 +89,19 @@ class Connector(object):
                             try:
                                 temp_data = json_data['rawEeg']
                                 self.data.on_next(temp_data)
-                            except:
+                            except:  # Key Access Error - TODO: add specific exception
                                 if len(json_data) > 3:
                                     self.poor_signal_level.on_next(json_data['eSense']['poorSignalLevel'])
                                 else:
                                     self.poor_signal_level.on_next(json_data['poorSignalLevel'])
-                        except:
+                        except:  # JSONDecodeError - TODO: add specific exception
                             continue
                     if self.poor_signal_level == 200 and self._VERBOSE:
                         print('Poor Connections!')
-            except:
-                print('An error occurred, are you connected?')
+            except (ConnectionError, ConnectionRefusedError, ConnectionAbortedError, ConnectionResetError):
+                print('An error connection occurred, are you connected?')
                 self.close()
+                raise ConnectionError('An error connection occurred, are you connected?')
 
     def record(self, path='./connector_data', recording_length=10) -> None:
         if not self.is_recording:
@@ -137,8 +143,7 @@ class Connector(object):
 
     def __enter__(self):
         # Data Generator initializer
-        print('here')
-        self._init_thread(target=self._generate_data)
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
